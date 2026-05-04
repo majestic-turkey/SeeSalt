@@ -19,6 +19,12 @@ export default function Lobby(): JSX.Element {
     const handleCreateRoom = () => {
         const randomRoomCode = generateRandomRoomId();
         const username = getUsername();
+
+        if (!socket || !username) {
+            alert('Please enter a username');
+            return;
+        }
+        
         setRoomCode(randomRoomCode);
         socket?.emit('join-room', { roomId: randomRoomCode, username });
         navigate(`/room/${randomRoomCode}`);
