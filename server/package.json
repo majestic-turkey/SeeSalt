@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@types/express": "^5.0.6",
+    "@types/socket.io-client": "^1.4.36",
     "express": "^5.2.1",
     "nodemon": "^3.1.14",
     "socket.io": "^4.8.3",
