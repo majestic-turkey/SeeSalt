@@ -1,13 +1,15 @@
 import { io, Socket } from 'socket.io-client'
 import { Route, Routes } from 'react-router-dom'
-import type { ClientToServerEvents, ServerToClientEvents } from '../../server/types.ts';
+import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { type JSX, useEffect } from 'react';
-import socketStore from './store/useStore.ts';
+import useStore from './store/useStore.ts';
 
-
+function testJoinRoom() {
+  useStore.getState().socket?.emit('join-room', { roomId: 'Wonderland', username: 'Alice' })
+}
 
 function App(): JSX.Element {
-  const { setSocket } = socketStore();
+  const { setSocket } = useStore();
 
   useEffect(() => {
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:3000');
@@ -25,7 +27,7 @@ function App(): JSX.Element {
 
   return (
     <Routes>
-      <Route path="/" element={<button onClick={() => socketStore.getState().socket?.emit('join-room', { roomId: 'Wonderland', username: 'Alice' })}>Join Room</button>} />
+      <Route path="/" element={<button onClick={testJoinRoom}>Join Room</button>} />
     </Routes>
   )
 }
