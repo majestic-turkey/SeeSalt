@@ -8,7 +8,7 @@ export default function Lobby(): JSX.Element {
     const navigate = useNavigate();
 
     function generateRandomRoomId() {
-        return Math.random().toString(36).substring(2, 8).toUpperCase();
+        return Math.random().toString(36).substring(2, 8);
     }
 
     function getUsername() {
@@ -24,7 +24,7 @@ export default function Lobby(): JSX.Element {
             alert('Please enter a username');
             return;
         }
-        
+
         setRoomCode(randomRoomCode);
         socket?.emit('join-room', { roomId: randomRoomCode, username });
         navigate(`/room/${randomRoomCode}`);
