@@ -33,8 +33,8 @@ export default function Lobby(): JSX.Element {
 
     return (<>
         <h1>Lobby</h1>
-        <label>Room name:
-            <input type="text" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
+        <label>Room code:
+            <input type="text" pattern="[A-Za-z0-9]{6}" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
         </label>
         <label>Username: 
             <input type="text" value={username} onChange={(e) => setUsername(e.target.value.trim())} />
