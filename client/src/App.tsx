@@ -1,19 +1,31 @@
 import { io, Socket } from 'socket.io-client'
 import { Route, Routes } from 'react-router-dom'
-import Home from './Home.tsx'
 import type { ClientToServerEvents, ServerToClientEvents } from '../../server/types.ts';
-import type { JSX } from 'react';
+import { type JSX, useEffect } from 'react';
+import socketStore from './store/useStore.ts';
+
+
 
 function App(): JSX.Element {
-  const socket: Socket<ClientToServerEvents, ServerToClientEvents> = io('http://localhost:3000');
+  const { setSocket } = socketStore();
 
-  socket.on('connect', () => {
-    console.log('connected to server');
-  });
+  useEffect(() => {
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:3000');
+    setSocket(socket);
+
+    socket.on('room-users', (users) => {
+      console.log('Users in room:', users);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [setSocket]);
+
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<button onClick={() => socketStore.getState().socket?.emit('join-room', { roomId: 'Wonderland', username: 'Alice' })}>Join Room</button>} />
     </Routes>
   )
 }
