@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-router/dev": "^7.14.2",
     "@types/react-router": "^5.1.20",
+    "@types/socket.io-client": "^1.4.36",
     "express": "^5.2.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
