@@ -10,3 +10,8 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
     'room-users': (users: User[]) => void
 }
+
+export interface Room {
+    id: string;
+    users: { id: string; username: string }[];
+}

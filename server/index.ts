@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
+import { getRoom, joinRoom, leaveRoom } from './rooms.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -28,8 +29,28 @@ app.get('/', (_req, res) => {
 io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
     console.log('a user connected');
 
+    // Listen for 'join-room' events from the client
+    socket.on('join-room', ({ roomId, username }) => {
+        console.log(`${username} joined room ${roomId}`);
+        socket.join(roomId);
+        joinRoom(roomId, { id: socket.id, username });
+
+        socket.data.roomId = roomId;
+        socket.data.username = username;
+
+        io.to(roomId).emit('room-users', getRoom(roomId)!.users);
+    });
+
+    // Cleanup on disconnect
     socket.on('disconnect', () => {
         console.log('user disconnected');
+        const { roomId } = socket.data;
+        if (!roomId) return;
+
+        leaveRoom(roomId, socket.id);
+
+        const room = getRoom(roomId);
+        io.to(roomId).emit('room-users', room?.users ?? []);
     })
 });
 

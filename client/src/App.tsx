@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client'
 import { Route, Routes } from 'react-router-dom'
+import Home from './Home.tsx'
 import type { ClientToServerEvents, ServerToClientEvents } from '../../server/types.ts';
 import type { JSX } from 'react';
 
@@ -12,7 +13,7 @@ function App(): JSX.Element {
 
   return (
     <Routes>
-      <Route path="/" element={<h1>You are connected.</h1>} />
+      <Route path="/" element={<Home />} />
     </Routes>
   )
 }
