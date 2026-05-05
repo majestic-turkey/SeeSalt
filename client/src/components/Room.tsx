@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import useStore from "../store/useStore";
 import useCanvas from "../hooks/useCanvas";
+import Toolbar from "./Toolbar";
 
 export default function Room() {
     // Local state
@@ -41,13 +42,14 @@ export default function Room() {
                     height={600}
                     style={{ display: 'block', border: '1px solid black', backgroundColor: '#212121', borderRadius: '8px' }}
                 />
-                <div className="toolbar" style={{ display: 'flex', gap: '10px', justifyContent: 'space-around' }}>
-                    <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
-                    <input type="range" min="1" max="20" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))} />
-                    <button onClick={() => setEraser(!eraser)} style={{ backgroundColor: eraser ? '#f44336' : '#4CAF50', color: 'white', border: 'none', padding: '10px', borderRadius: '4px' }}>
-                        {eraser ? 'Eraser On' : 'Eraser Off'}
-                    </button>
-                </div>
+                <Toolbar 
+                    color={color}
+                    setColor={setColor}
+                    brushSize={brushSize}
+                    setBrushSize={setBrushSize}
+                    eraser={eraser}
+                    setEraser={setEraser}
+                />
             </div>
         </section>
     </>);
