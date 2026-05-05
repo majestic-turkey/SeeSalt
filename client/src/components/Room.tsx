@@ -14,7 +14,7 @@ export default function Room() {
             navigate("/");
             return;
         }
-        socket.emit("join-room", {roomId, username});
+        socket.emit("join-room", { roomId, username });
     }, [roomId, navigate, socket, username]);
 
     return (
@@ -26,7 +26,12 @@ export default function Room() {
                     <li key={user.id}>{user.username}</li>
                 ))}
             </ul>
-            <canvas ref={canvasRef} id="drawing-canvas" width={800} height={600} style={{ border: '1px solid black' }}></canvas>
+            <canvas
+                ref={canvasRef}
+                width={800}
+                height={600}
+                style={{ display: 'block' }}
+            />
         </div>
     );
 }

@@ -8,13 +8,13 @@ export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
     const { socket } = useStore();
 
-    
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
+
         function drawSegment(
             ctx: CanvasRenderingContext2D,
             segment: StrokeSegment
@@ -27,12 +27,14 @@ export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
             ctx.lineCap = 'round'
             ctx.stroke()
         }
-        
+
         const handleMouseMove = (e: MouseEvent) => {
             if (!isMouseDown.current || !mousePosition.current) return;
 
+            const rect = canvas.getBoundingClientRect();
+
             // Begin drawing the line
-            const newMousePosition = { x: e.clientX, y: e.clientY };
+            const newMousePosition = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
             // Draw the segment locally
             const segment: StrokeSegment = {
@@ -49,8 +51,13 @@ export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
         };
 
         const handleMouseDown = (e: MouseEvent) => {
-            mousePosition.current = { x: e.clientX, y: e.clientY };
+
+            const rect = canvas.getBoundingClientRect();
+            mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             isMouseDown.current = true;
+            console.log('rect:', rect)
+            console.log('clientX/Y:', e.clientX, e.clientY)
+            console.log('calculated:', e.clientX - rect.left, e.clientY - rect.top)
         };
 
         const handleMouseUpOrLeave = () => {
