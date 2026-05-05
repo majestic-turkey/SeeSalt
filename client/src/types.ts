@@ -18,5 +18,5 @@ export interface StrokeSegment {
     x0: number; y0: number; // From coordinates
     x1: number; y1: number; // To coordinates
     color: string; // Stroke color
-    lineWidth: number; // Stroke width
+    width: number; // Stroke width
 }

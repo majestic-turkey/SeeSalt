@@ -1,11 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import useStore from "../store/useStore";
+import useCanvas from "../hooks/useCanvas";
 
 export default function Room() {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const { username, users, socket } = useStore();
+    const canvasRef = useCanvas();
 
     useEffect(() => {
         if (!roomId || !username || !socket) {
@@ -24,6 +26,7 @@ export default function Room() {
                     <li key={user.id}>{user.username}</li>
                 ))}
             </ul>
+            <canvas ref={canvasRef} id="drawing-canvas" width={800} height={600} style={{ border: '1px solid black' }}></canvas>
         </div>
     );
 }
