@@ -4,6 +4,7 @@ import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { type JSX, useEffect } from 'react';
 import useStore from './store/useStore.ts';
 import Lobby from './components/Lobby.tsx';
+import Room from './components/Room.tsx';
 
 function App(): JSX.Element {
   const { setSocket, setUsers } = useStore();
@@ -25,6 +26,7 @@ function App(): JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<Lobby />} />
+      <Route path="/room/:roomId" element={<Room />} />
     </Routes>
   )
 }

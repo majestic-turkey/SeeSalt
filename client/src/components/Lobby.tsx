@@ -37,7 +37,7 @@ export default function Lobby(): JSX.Element {
             <input type="text" pattern="[A-Za-z0-9]{6}" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
         </label>
         <label>Username: 
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value.trim())} />
+            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
         </label>
         <button onClick={handleCreateRoom}>
             Create Room
