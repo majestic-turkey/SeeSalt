@@ -2,12 +2,20 @@ import { useRef, useEffect } from 'react';
 import useStore from '../store/useStore';
 import type { StrokeSegment } from '../types';
 
-export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
+export default function useCanvas(color: string, brushSize: number, eraser: boolean): React.RefObject<HTMLCanvasElement> {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
     const { socket } = useStore();
+    const colorRef = useRef(color);
+    const brushSizeRef = useRef(brushSize);
+    const eraserRef = useRef(eraser);
 
+    useEffect(() => {
+        colorRef.current = color;
+        brushSizeRef.current = brushSize;
+        eraserRef.current = eraser;
+    }, [color, brushSize, eraser]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -42,8 +50,8 @@ export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
                 y0: mousePosition.current!.y,
                 x1: newMousePosition.x,
                 y1: newMousePosition.y,
-                color: 'black',
-                width: 2
+                color: eraserRef.current ? '#212121' : colorRef.current,
+                width: brushSizeRef.current,
             };
             drawSegment(ctx, segment);
             socket?.emit('on-draw', segment);
@@ -55,9 +63,6 @@ export default function useCanvas(): React.RefObject<HTMLCanvasElement> {
             const rect = canvas.getBoundingClientRect();
             mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             isMouseDown.current = true;
-            console.log('rect:', rect)
-            console.log('clientX/Y:', e.clientX, e.clientY)
-            console.log('calculated:', e.clientX - rect.left, e.clientY - rect.top)
         };
 
         const handleMouseUpOrLeave = () => {
