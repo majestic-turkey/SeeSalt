@@ -17,23 +17,25 @@ export default function Room() {
         socket.emit("join-room", { roomId, username });
     }, [roomId, navigate, socket, username]);
 
-    return (<section className="room" style={{ display: 'flex', height: '100vh' }}>
-        <div className="sidebar" style={{ width: '250px', padding: '20px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-            <h1>Room: {roomId}</h1>
-            <h2>Users in room:</h2>
-            <ul>
-                {users.map((user) => (
-                    <li key={user.id}>{user.username}</li>
-                ))}
-            </ul>
-        </div>
-        <div className="canvas-container" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <canvas
-                ref={canvasRef}
-                width={800}
-                height={600}
-                style={{ display: 'block' }}
-            />
-        </div>
-    </section>);
+    return (<>
+        <h1>Room: {roomId}</h1>
+        <section className="room" style={{ display: 'flex', height: '100vh' }}>
+            <div className="sidebar" style={{ width: '250px', padding: '20px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+                <h2>Users in room:</h2>
+                <ul>
+                    {users.map((user) => (
+                        <li key={user.id}>{user.username}</li>
+                    ))}
+                </ul>
+            </div>
+            <div className="canvas-container" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <canvas
+                    ref={canvasRef}
+                    width={800}
+                    height={600}
+                    style={{ display: 'block', border: '1px solid black', backgroundColor: '#212121', borderRadius: '8px' }}
+                />
+            </div>
+        </section>
+    </>);
 }
