@@ -4,7 +4,7 @@ import http from 'http';
 import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
-import { getRoom, joinRoom, leaveRoom } from './rooms.ts';
+import { addStrokeToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -39,6 +39,22 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         socket.data.username = username;
 
         io.to(roomId).emit('room-users', getRoom(roomId)!.users);
+
+        // Send existing strokes to the newly joined user
+        if (getRoom(roomId).strokes.length > 0) {
+            const strokeReplay = getRoom(roomId).strokes;
+            strokeReplay.forEach(stroke => {
+                socket.emit('draw-canvas', stroke);
+            });
+        }
+    });
+
+    // Listen for 'on-draw' events from the client
+    socket.on('on-draw', (payload) => {
+        const { roomId } = socket.data;
+        if (!roomId) return;
+        addStrokeToRoom(roomId, payload);
+        socket.to(roomId).emit('draw-canvas', payload);
     });
 
     // Cleanup on disconnect

@@ -1,16 +1,22 @@
-import type { Room } from './types.ts';
+import type { Room, StrokeSegment } from './types.ts';
 
-const rooms: Record<string, Room> = {};
+const rooms: Record<string, Room & { strokes: StrokeSegment[] }> = {};
 
 export function getRoom (roomId: string) {
     return rooms[roomId];
 }
 
-export function joinRoom (roomId: string, user: { id: string; username: string }) {
+export function joinRoom (roomId: string, user: Room["users"][number]) {
     if (!rooms[roomId]) {
-        rooms[roomId] = { id: roomId, users: [] };
+        rooms[roomId] = { id: roomId, users: [], strokes: [] };
     }
     rooms[roomId].users.push(user);
+}
+
+export function addStrokeToRoom (roomId: string, stroke: StrokeSegment) {
+    const room = rooms[roomId];
+    if (!room) return;
+    room.strokes.push(stroke);
 }
 
 export function leaveRoom (roomId: string, userId: string) {
