@@ -11,6 +11,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const colorRef = useRef(color);
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
+    const allStrokes = useRef<StrokeSegment[]>([]);
 
     useEffect(() => {
         colorRef.current = color;
