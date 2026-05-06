@@ -2,11 +2,12 @@ import { useRef, useEffect } from 'react';
 import useStore from '../store/useStore';
 import type { StrokeSegment } from '../types';
 
-export default function useCanvas(color: string, brushSize: number, eraser: boolean): React.RefObject<HTMLCanvasElement> {
+export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): React.RefObject<HTMLCanvasElement> {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
-    const { socket, username } = useStore();
+    const { socket } = useStore();
+    const usernameRef = useRef(username);
     const colorRef = useRef(color);
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
@@ -15,7 +16,8 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         colorRef.current = color;
         brushSizeRef.current = brushSize;
         eraserRef.current = eraser;
-    }, [color, brushSize, eraser]);
+        usernameRef.current = username;
+    }, [color, brushSize, eraser, username]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -40,9 +42,11 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             if (!isMouseDown.current || !mousePosition.current) return;
 
             const rect = canvas.getBoundingClientRect();
+            const calculatedX = e.clientX - rect.left;
+            const calculatedY = e.clientY - rect.top;
 
             // Begin drawing the line
-            const newMousePosition = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            const newMousePosition = { x: calculatedX, y: calculatedY };
 
             // Draw the segment locally
             const segment: StrokeSegment = {
@@ -55,12 +59,11 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             };
             drawSegment(ctx, segment);
             socket?.emit('on-draw', segment); // Emit the segment to the server
-            socket?.emit('cursor-move', { x: e.clientX, y: e.clientY, username, userId: socket.id || '' }); // Emit cursor position to the server
+            socket?.emit('cursor-move', { x: calculatedX, y: calculatedY, username, userId: socket.id || '' }); // Emit cursor position to the server
             mousePosition.current = newMousePosition;
         };
 
         const handleMouseDown = (e: MouseEvent) => {
-
             const rect = canvas.getBoundingClientRect();
             mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             isMouseDown.current = true;
@@ -79,14 +82,6 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         // Listen for 'draw-canvas' events from the server
         socket?.on('draw-canvas', (segment: StrokeSegment) => {
             drawSegment(ctx, segment);
-        });
-
-        // Listen for 'cursor-update' events from the server
-        socket?.on('cursor-update', (payload: { x: number; y: number; username: string; userId: string }) => {
-            console.log(`Cursor update from ${payload.username} (ID: ${payload.userId}): (${payload.x}, ${payload.y})`);
-            ctx.ellipse(payload.x, payload.y, 5, 5, 0, 0, 2 * Math.PI);
-            ctx.fillStyle = 'red';
-            ctx.fill();
         });
 
         // Cleanup event listeners and socket listeners on unmount
