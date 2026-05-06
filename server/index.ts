@@ -57,6 +57,13 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         socket.to(roomId).emit('draw-canvas', payload);
     });
 
+    // Listen for 'cursor-move' events from the client
+    socket.on('cursor-move', (payload) => {
+        const { roomId, username } = socket.data;
+        if (!roomId || !username) return;
+        socket.to(roomId).emit('cursor-update', { ...payload });
+    });
+
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         console.log('user disconnected');

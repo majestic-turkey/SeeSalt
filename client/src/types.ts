@@ -7,11 +7,13 @@ export interface User {
 export interface ClientToServerEvents {
     'join-room': (payload: { roomId: string; username: string}) => void
     'on-draw': (payload: StrokeSegment) => void
+    'cursor-move': (payload: { x: number; y: number; username: string; userId: string }) => void
 }
 
 export interface ServerToClientEvents {
     'room-users': (users: User[]) => void
     'draw-canvas': (payload: StrokeSegment) => void
+    'cursor-update': (payload: { x: number; y: number; username: string; userId: string }) => void
 }
 
 export interface StrokeSegment {

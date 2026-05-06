@@ -6,7 +6,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
-    const { socket } = useStore();
+    const { socket, username } = useStore();
     const colorRef = useRef(color);
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
@@ -54,7 +54,8 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
                 width: brushSizeRef.current,
             };
             drawSegment(ctx, segment);
-            socket?.emit('on-draw', segment);
+            socket?.emit('on-draw', segment); // Emit the segment to the server
+            socket?.emit('cursor-move', { x: e.clientX, y: e.clientY, username, userId: socket.id || '' }); // Emit cursor position to the server
             mousePosition.current = newMousePosition;
         };
 
@@ -80,6 +81,14 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             drawSegment(ctx, segment);
         });
 
+        // Listen for 'cursor-update' events from the server
+        socket?.on('cursor-update', (payload: { x: number; y: number; username: string; userId: string }) => {
+            console.log(`Cursor update from ${payload.username} (ID: ${payload.userId}): (${payload.x}, ${payload.y})`);
+            ctx.ellipse(payload.x, payload.y, 5, 5, 0, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        });
+
         // Cleanup event listeners and socket listeners on unmount
         return () => {
             canvas.removeEventListener('mousemove', handleMouseMove);
@@ -87,9 +96,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             canvas.removeEventListener('mouseup', handleMouseUpOrLeave);
             canvas.removeEventListener('mouseleave', handleMouseUpOrLeave);
             socket?.off('draw-canvas');
+            socket?.off('cursor-update');
         };
 
-    }, [socket]);
+    }, [socket, username]);
 
     return canvasRef as React.RefObject<HTMLCanvasElement>;
 }
