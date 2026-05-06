@@ -23,6 +23,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Fill canvas with light background so eraser works correctly
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         function drawSegment(
             ctx: CanvasRenderingContext2D,
             segment: StrokeSegment
@@ -50,7 +54,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
                 y0: mousePosition.current!.y,
                 x1: newMousePosition.x,
                 y1: newMousePosition.y,
-                color: eraserRef.current ? '#212121' : colorRef.current,
+                color: eraserRef.current ? '#f8f9fa' : colorRef.current,
                 width: brushSizeRef.current,
             };
             drawSegment(ctx, segment);

@@ -5,7 +5,6 @@ import useCanvas from "../hooks/useCanvas";
 import Toolbar from "./Toolbar";
 
 export default function Room() {
-    // Local state
     const [color, setColor] = useState("#212121");
     const [brushSize, setBrushSize] = useState(4);
     const [eraser, setEraser] = useState(false);
@@ -15,7 +14,6 @@ export default function Room() {
     const { username, users, socket } = useStore();
     const canvasRef = useCanvas(color, brushSize, eraser);
 
-
     useEffect(() => {
         if (!roomId || !username || !socket) {
             navigate("/");
@@ -24,25 +22,47 @@ export default function Room() {
         socket.emit("join-room", { roomId, username });
     }, [roomId, navigate, socket, username]);
 
-    return (<>
-        <h1>Room: {roomId}</h1>
-        <section className="room" style={{ display: 'flex', height: '100vh' }}>
-            <div className="sidebar" style={{ width: '250px', padding: '20px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                <h2>Users in room:</h2>
-                <ul>
+    return (
+        <div className="room-layout">
+            {/* ── Left sidebar: users ── */}
+            <aside className="sidebar">
+                <div className="sidebar-header">
+                    <div className="sidebar-room-name">Room</div>
+                    <div className="sidebar-room-id">{roomId}</div>
+                </div>
+                <div className="sidebar-section-label">Online · {users.length}</div>
+                <ul className="user-list">
                     {users.map((user) => (
-                        <li key={user.id}>{user.username}</li>
+                        <li className="user-item" key={user.id}>
+                            <div className="user-avatar">
+                                {user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="user-name">{user.username}</span>
+                            <span className="user-status-dot" />
+                        </li>
                     ))}
                 </ul>
-            </div>
-            <div className="canvas-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <canvas
-                    ref={canvasRef}
-                    width={800}
-                    height={600}
-                    style={{ display: 'block', border: '1px solid black', backgroundColor: '#212121', borderRadius: '8px' }}
-                />
-                <Toolbar 
+            </aside>
+
+            {/* ── Main canvas area ── */}
+            <main className="canvas-area">
+                <div className="canvas-topbar">
+                    <button className="btn btn-ghost btn-icon" onClick={() => navigate("/")} title="Leave room">
+                        ← Leave
+                    </button>
+                </div>
+
+                <div className="canvas-scroll">
+                    <div className="canvas-frame">
+                        <canvas
+                            ref={canvasRef}
+                            width={800}
+                            height={600}
+                        />
+                    </div>
+                </div>
+
+                <Toolbar
                     color={color}
                     setColor={setColor}
                     brushSize={brushSize}
@@ -50,7 +70,7 @@ export default function Room() {
                     eraser={eraser}
                     setEraser={setEraser}
                 />
-            </div>
-        </section>
-    </>);
+            </main>
+        </div>
+    );
 }
