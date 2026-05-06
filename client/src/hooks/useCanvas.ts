@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react';
 import useStore from '../store/useStore';
 import type { StrokeSegment } from '../types';
 
-export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): React.RefObject<HTMLCanvasElement> {
+export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): {canvasRef: React.RefObject<HTMLCanvasElement>, saveAsPng: () => void} {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
@@ -20,6 +20,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     }, [color, brushSize, eraser, username]);
 
     useEffect(() => {
+        if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -38,16 +39,17 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             ctx.stroke()
         }
 
+        
         const handleMouseMove = (e: MouseEvent) => {
             if (!isMouseDown.current || !mousePosition.current) return;
-
+            
             const rect = canvas.getBoundingClientRect();
             const calculatedX = e.clientX - rect.left;
             const calculatedY = e.clientY - rect.top;
-
+            
             // Begin drawing the line
             const newMousePosition = { x: calculatedX, y: calculatedY };
-
+            
             // Draw the segment locally
             const segment: StrokeSegment = {
                 x0: mousePosition.current!.x,
@@ -62,18 +64,18 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             socket?.emit('cursor-move', { x: calculatedX, y: calculatedY, username: usernameRef.current, userId: socket.id || '' }); // Emit cursor position to the server
             mousePosition.current = newMousePosition;
         };
-
+        
         const handleMouseDown = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             isMouseDown.current = true;
         };
-
+        
         const handleMouseUpOrLeave = () => {
             isMouseDown.current = false;
             mousePosition.current = null;
         };
-
+        
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
         canvas.addEventListener('mouseup', handleMouseUpOrLeave);
@@ -83,7 +85,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         socket?.on('draw-canvas', (segment: StrokeSegment) => {
             drawSegment(ctx, segment);
         });
-
+        
         // Cleanup event listeners and socket listeners on unmount
         return () => {
             canvas.removeEventListener('mousemove', handleMouseMove);
@@ -92,8 +94,17 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             canvas.removeEventListener('mouseleave', handleMouseUpOrLeave);
             socket?.off('draw-canvas');
         };
-
+        
     }, [socket, username]);
+    
+    const saveAsPng = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = `seesalt_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    };
 
-    return canvasRef as React.RefObject<HTMLCanvasElement>;
+    return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng };
 }
