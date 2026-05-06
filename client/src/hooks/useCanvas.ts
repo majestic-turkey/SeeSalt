@@ -62,6 +62,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             };
             drawSegment(ctx, segment);
             socket?.emit('on-draw', segment); // Emit the segment to the server
+            allStrokes.current.push(segment);
             socket?.emit('cursor-move', { x: calculatedX, y: calculatedY, username: usernameRef.current, userId: socket.id || '' }); // Emit cursor position to the server
             mousePosition.current = newMousePosition;
         };
