@@ -8,6 +8,7 @@ export interface ChatMessage {
     socketId: string;
     username: string;
     message: string;
+    timestamp: number;
 }
 
 export interface ClientToServerEvents {

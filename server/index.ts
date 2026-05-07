@@ -76,7 +76,7 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     socket.on('send-chat-message', (message) => {
         const { roomId, username } = socket.data;
         if (!roomId || !username) return;
-        const chatMessage = { socketId: socket.id, username, message };
+        const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
         io.to(roomId).emit('chat-message', chatMessage);
     });

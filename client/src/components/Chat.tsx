@@ -42,8 +42,8 @@ export default function Chat(): JSX.Element {
     return (
         <div className="chat-panel">
             <div className="chat-messages">
-                {chatMessages.map((msg, index) => (
-                    <p key={index} className="chat-message">
+                {chatMessages.map((msg) => (
+                    <p key={`${msg.socketId}-${msg.timestamp}`} className="chat-message">
                         <strong className="chat-username">{msg.username}:</strong> {msg.message}
                     </p>
                 ))}
