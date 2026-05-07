@@ -64,6 +64,16 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         socket.to(roomId).emit('cursor-update', { ...payload });
     });
 
+    // Listen for 'undo' events from the client
+    socket.on('undo', (payload) => {
+        const { roomId } = socket.data;
+        if (!roomId) return;
+        const room = getRoom(roomId);
+        if (!room) return;
+        room.strokes = room.strokes.filter(stroke => stroke.strokeId !== payload.strokeId);
+        socket.to(roomId).emit('undo-canvas', payload);
+    });
+
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         console.log('user disconnected');

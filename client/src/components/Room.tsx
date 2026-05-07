@@ -25,7 +25,7 @@ export default function Room() {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const { username, users, socket } = useStore();
-    const { canvasRef, saveAsPng } = useCanvas(color, brushSize, eraser, username);
+    const { canvasRef, saveAsPng, undo } = useCanvas(color, brushSize, eraser, username);
 
     useEffect(() => {
         if (!roomId || !username || !socket) {
@@ -122,6 +122,7 @@ export default function Room() {
                     eraser={eraser}
                     setEraser={setEraser}
                     saveAsPng={saveAsPng}
+                    undo={undo}
                 />
             </div>
         </section>
