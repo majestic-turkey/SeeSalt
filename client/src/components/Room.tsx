@@ -6,12 +6,12 @@ import Toolbar from "./Toolbar";
 import type { User } from "../types";
 
 function colorFromId(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const hue = Math.abs(hash) % 360
-  return `hsl(${hue}, 70%, 60%)`
+    let hash = 0
+    for (let i = 0; i < id.length; i++) {
+        hash = id.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    const hue = Math.abs(hash) % 360
+    return `hsl(${hue}, 70%, 60%)`
 }
 
 
@@ -68,23 +68,38 @@ export default function Room() {
     }, [socket]);
 
     return (<>
-        <h1>Room: {roomId}</h1>
-        <section className="room" style={{ display: 'flex', height: '100vh' }}>
-            <div className="sidebar" style={{ width: '250px', padding: '20px', backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
-                <h2>Users in room:</h2>
-                <ul>
+        <section className="room-layout">
+            {/* Sidebar with user list */}
+            <aside className="sidebar">
+                <div className="sidebar-header">
+                    <div className="sidebar-room-name">Room</div>
+                    <div className="sidebar-room-id">{roomId}</div>
+                </div>
+                <div className="sidebar-section-label">Online · {users.length}</div>
+                <ul className="user-list">
                     {users.map((user) => (
-                        <li key={user.id}>{user.username}</li>
+                        <li className="user-item" key={user.id}>
+                            <div className="user-avatar">
+                                {user.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="user-name">{user.username}</span>
+                            <span className="user-status-dot" />
+                        </li>
                     ))}
                 </ul>
-            </div>
-            <div className="canvas-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ position: 'relative' }}>
+            </aside>
+            {/* Main canvas area */}
+            <div className="canvas-area">
+                 <div className="canvas-topbar">
+                    <button className="btn btn-ghost btn-icon" onClick={() => navigate("/")} title="Leave room">
+                        ← Leave
+                    </button>
+                </div>
+                <div className="canvas-frame">
                     <canvas
                         ref={canvasRef}
                         width={800}
                         height={600}
-                        style={{ display: 'block', border: '1px solid black', backgroundColor: '#212121', borderRadius: '8px' }}
                     />
                     <div className="cursors" style={{
                         position: 'absolute',
