@@ -3,11 +3,19 @@ export interface User {
     username: string
 }
 
+export interface ChatMessage {
+    socketId: string;
+    username: string;
+    message: string;
+}
+
 export interface ClientToServerEvents {
     'join-room': (payload: { roomId: string; username: string}) => void
     'on-draw': (payload: StrokeSegment) => void
     'cursor-move': (payload: { x: number; y: number; username: string; userId: string }) => void
     'undo': (payload: { strokeId: string; userId: string }) => void
+    'send-chat-message': (message: string) => void
+    'get-chat-history': () => void
 }
 
 export interface ServerToClientEvents {
@@ -15,6 +23,7 @@ export interface ServerToClientEvents {
     'draw-canvas': (payload: StrokeSegment) => void
     'cursor-update': (payload: { x: number; y: number; username: string; userId: string }) => void
     'undo-canvas': (payload: { strokeId: string; userId: string }) => void
+    'chat-message': (payload: ChatMessage | ChatMessage[]) => void
 }
 
 export interface Room {

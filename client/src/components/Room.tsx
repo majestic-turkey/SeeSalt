@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import useStore from "../store/useStore";
 import useCanvas from "../hooks/useCanvas";
 import Toolbar from "./Toolbar";
+import Chat from "./Chat";
 import type { User } from "../types";
 
 function colorFromId(id: string): string {
@@ -87,6 +88,8 @@ export default function Room() {
                         </li>
                     ))}
                 </ul>
+                <div className="sidebar-section-label sidebar-chat-label">Chat</div>
+                <Chat />
             </aside>
             {/* Main canvas area */}
             <div className="canvas-area">

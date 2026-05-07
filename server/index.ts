@@ -4,7 +4,7 @@ import http from 'http';
 import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
-import { addStrokeToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
+import { addStrokeToRoom, addChatMessageToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -70,6 +70,24 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         if (!room) return;
         room.strokes = room.strokes.filter(stroke => stroke.strokeId !== payload.strokeId);
         socket.to(roomId).emit('undo-canvas', payload);
+    });
+
+    // Listen for 'send-chat-message' events from the client
+    socket.on('send-chat-message', (message) => {
+        const { roomId, username } = socket.data;
+        if (!roomId || !username) return;
+        const chatMessage = { socketId: socket.id, username, message };
+        addChatMessageToRoom(roomId, chatMessage);
+        io.to(roomId).emit('chat-message', chatMessage);
+    });
+
+    // Send chat history to a client on request
+    socket.on('get-chat-history', () => {
+        const { roomId } = socket.data;
+        if (!roomId) return;
+        const room = getRoom(roomId);
+        if (!room) return;
+        socket.emit('chat-message', room.chatHistory);
     });
 
     // Cleanup on disconnect
