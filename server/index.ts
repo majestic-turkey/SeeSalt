@@ -27,11 +27,9 @@ app.get('/', (_req, res) => {
 
 // Handle Socket.IO connections
 io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
-    console.log('a user connected');
 
     // Listen for 'join-room' events from the client
     socket.on('join-room', ({ roomId, username }) => {
-        console.log(`${username} joined room ${roomId}`);
         socket.join(roomId);
         joinRoom(roomId, { id: socket.id, username });
 
@@ -76,7 +74,6 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
 
     // Cleanup on disconnect
     socket.on('disconnect', () => {
-        console.log('user disconnected');
         const { roomId } = socket.data;
         if (!roomId) return;
 

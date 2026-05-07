@@ -12,6 +12,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
     const allStrokes = useRef<StrokeSegment[]>([]);
+    const currentStrokeId = useRef<string | null>(null);
 
     useEffect(() => {
         colorRef.current = color;
@@ -26,10 +27,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        
+
         const handleMouseMove = (e: MouseEvent) => {
             if (!isMouseDown.current || !mousePosition.current) return;
-            
+
             const rect = canvas.getBoundingClientRect();
             const calculatedX = e.clientX - rect.left;
             const calculatedY = e.clientY - rect.top;
@@ -43,10 +44,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
                 y0: mousePosition.current!.y,
                 x1: newMousePosition.x,
                 y1: newMousePosition.y,
-                color: eraserRef.current ? '#212121' : colorRef.current,
+                color: eraserRef.current ? '#f8f9fa' : colorRef.current,
                 width: brushSizeRef.current,
                 userId: socket?.id || '',
-                strokeId: Math.floor(Math.random() * 9000) + 1000 // Generate a random stroke ID
+                strokeId: currentStrokeId.current!
             };
             drawSegment(ctx, segment);
             socket?.emit('on-draw', segment); // Emit the segment to the server
@@ -56,21 +57,23 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         };
 
         const handleMouseDown = (e: MouseEvent) => {
+            currentStrokeId.current = crypto.randomUUID();
             const rect = canvas.getBoundingClientRect();
             mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             isMouseDown.current = true;
         };
-        
+
         const handleMouseUpOrLeave = () => {
+            currentStrokeId.current = null;
             isMouseDown.current = false;
             mousePosition.current = null;
         };
-        
+
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
         canvas.addEventListener('mouseup', handleMouseUpOrLeave);
         canvas.addEventListener('mouseleave', handleMouseUpOrLeave);
-        
+
         // Listen for 'draw-canvas' events from the server
         socket?.on('draw-canvas', (segment: StrokeSegment) => {
             allStrokes.current.push(segment);
@@ -78,7 +81,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         });
 
         // Listen for 'undo-canvas' events from the server
-            socket?.on('undo-canvas', (payload: { strokeId: number; userId: string }) => {
+        socket?.on('undo-canvas', (payload: { strokeId: string; userId: string }) => {
             allStrokes.current = allStrokes.current.filter(segment => segment.strokeId !== payload.strokeId);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             allStrokes.current.forEach(segment => drawSegment(ctx, segment));
@@ -93,9 +96,9 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             socket?.off('draw-canvas');
             socket?.off('undo-canvas');
         };
-        
+
     }, [socket]);
-    
+
     function drawSegment(
         ctx: CanvasRenderingContext2D,
         segment: StrokeSegment
@@ -117,24 +120,22 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         link.href = canvas.toDataURL('image/png');
         link.click();
     };
-    
+
     const undo = () => {
+        const lastStroke = allStrokes.current.findLast(s => s.userId === socket?.id)
+        if (!lastStroke || !socket?.id) return
+        const strokeId = lastStroke.strokeId
+
         if (allStrokes.current.length === 0) return;
-        let lastSegmentIndex;
-        const lastIndex = allStrokes.current.findLastIndex(segment => segment.userId === socket?.id);
-        if (lastIndex !== -1) {
-            lastSegmentIndex = allStrokes.current[lastIndex];
-            allStrokes.current.splice(lastIndex, 1);;
-        }
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        allStrokes.current.forEach(segment => drawSegment(ctx, segment));
-        if (!lastSegmentIndex || !socket?.id) return;
-        socket?.emit('undo', { strokeId: lastSegmentIndex?.strokeId, userId: socket.id });
+        allStrokes.current = allStrokes.current.filter(s => s.strokeId !== strokeId)
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        allStrokes.current.forEach(s => drawSegment(ctx, s))
+        socket?.emit('undo', { strokeId, userId: socket.id })
     }
-    
+
     return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo };
 }
