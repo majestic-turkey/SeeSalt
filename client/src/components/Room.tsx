@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import useStore from "../store/useStore";
 import useCanvas from "../hooks/useCanvas";
 import Toolbar from "./Toolbar";
+import Chat from "./Chat";
 import type { User } from "../types";
 
 function colorFromId(id: string): string {
@@ -90,7 +91,7 @@ export default function Room() {
             </aside>
             {/* Main canvas area */}
             <div className="canvas-area">
-                 <div className="canvas-topbar">
+                <div className="canvas-topbar">
                     <button className="btn btn-ghost btn-icon" onClick={() => navigate("/")} title="Leave room">
                         ← Leave
                     </button>
@@ -139,6 +140,10 @@ export default function Room() {
                     saveAsPng={saveAsPng}
                     undo={undo}
                 />
+            </div>
+            <div className="chat-sidebar">
+                <div className="sidebar-section-label sidebar-chat-label">Chat</div>
+                <Chat />
             </div>
         </section>
     </>);
