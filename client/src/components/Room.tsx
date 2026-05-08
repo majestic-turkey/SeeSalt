@@ -96,38 +96,40 @@ export default function Room() {
                         ← Leave
                     </button>
                 </div>
-                <div className="canvas-frame">
-                    <canvas
-                        ref={canvasRef}
-                        width={800}
-                        height={600}
-                    />
-                    <div className="cursors" style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        pointerEvents: 'none'
-                    }}>
-                        {Object.entries(cursors).map(([userId, cursor]) => (
-                            <div key={userId} style={{
-                                position: 'absolute',
-                                left: cursor.x,
-                                top: cursor.y,
-                                transform: 'translate(-50%, -50%)'
-                            }}>
-                                <div style={{
-                                    width: '10px',
-                                    height: '10px',
-                                    backgroundColor: colorFromId(userId),
-                                    borderRadius: '50%'
+                <div className="canvas-scroll">
+                    <div className="canvas-frame">
+                        <canvas
+                            ref={canvasRef}
+                            width={800}
+                            height={600}
+                        />
+                        <div className="cursors" style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            pointerEvents: 'none'
+                        }}>
+                            {Object.entries(cursors).map(([userId, cursor]) => (
+                                <div key={userId} style={{
+                                    position: 'absolute',
+                                    left: cursor.x,
+                                    top: cursor.y,
+                                    transform: 'translate(-50%, -50%)'
                                 }}>
+                                    <div style={{
+                                        width: '10px',
+                                        height: '10px',
+                                        backgroundColor: colorFromId(userId),
+                                        borderRadius: '50%'
+                                    }}>
 
+                                    </div>
+                                    <span style={{ color: 'black', textShadow: '1px 1px 1px white', fontSize: '12px' }}>{cursor.username}</span>
                                 </div>
-                                <span style={{ color: 'black', textShadow: '1px 1px 1px white', fontSize: '12px' }}>{cursor.username}</span>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
                 <Toolbar
