@@ -75,6 +75,7 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     // Listen for 'send-chat-message' events from the client
     socket.on('send-chat-message', (message) => {
         const { roomId, username } = socket.data;
+        console.log(`Received chat message from ${username} in room ${roomId}: ${message}`);
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
