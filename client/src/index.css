@@ -601,6 +601,7 @@ input[type="range"]::-moz-range-thumb {
   .room-layout {
     flex-direction: column;
     height: auto;
+    min-height: 100vh;
     min-height: 100svh;
     overflow: auto;
   }
@@ -619,6 +620,7 @@ input[type="range"]::-moz-range-thumb {
     border-left: none;
     border-top: 1px solid var(--border);
     min-height: 220px;
+    max-height: 38vh;
     max-height: 38svh;
   }
 
