@@ -88,12 +88,10 @@ export default function Room() {
                         </li>
                     ))}
                 </ul>
-                <div className="sidebar-section-label sidebar-chat-label">Chat</div>
-                <Chat />
             </aside>
             {/* Main canvas area */}
             <div className="canvas-area">
-                 <div className="canvas-topbar">
+                <div className="canvas-topbar">
                     <button className="btn btn-ghost btn-icon" onClick={() => navigate("/")} title="Leave room">
                         ← Leave
                     </button>
@@ -142,6 +140,10 @@ export default function Room() {
                     saveAsPng={saveAsPng}
                     undo={undo}
                 />
+            </div>
+            <div className="chat-sidebar">
+                <div className="sidebar-section-label sidebar-chat-label">Chat</div>
+                <Chat />
             </div>
         </section>
     </>);

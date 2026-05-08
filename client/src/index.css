@@ -369,6 +369,7 @@ p { margin: 0; }
   box-shadow: var(--shadow-canvas);
   line-height: 0;
   border: 1px solid rgba(255,255,255,.07);
+  align-self: center;
 }
 
 canvas {
@@ -576,4 +577,13 @@ input[type="range"]::-moz-range-thumb {
   padding: 7px 12px;
   font-size: 13px;
   flex-shrink: 0;
+}
+
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
 }
