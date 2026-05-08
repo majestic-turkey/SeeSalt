@@ -125,7 +125,7 @@ export default function Room() {
                                 }}>
 
                                 </div>
-                                <span style={{ color: 'white', fontSize: '12px' }}>{cursor.username}</span>
+                                <span style={{ color: 'black', textShadow: '1px 1px 1px white', fontSize: '12px' }}>{cursor.username}</span>
                             </div>
                         ))}
                     </div>
