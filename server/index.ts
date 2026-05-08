@@ -1,10 +1,10 @@
 import express from 'express';
-import {Server, Socket} from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import http from 'http';
 import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
-import { addStrokeToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
+import { addStrokeToRoom, addChatMessageToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -45,6 +45,12 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
                 socket.emit('draw-canvas', stroke);
             });
         }
+
+        // Send chat history to the new joiner
+        const history = getRoom(roomId).chatHistory;
+        if (history.length > 0) {
+            socket.emit('chat-message', history);
+        }
     });
 
     // Listen for 'on-draw' events from the client
@@ -72,6 +78,15 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         socket.to(roomId).emit('undo-canvas', payload);
     });
 
+    // Listen for 'send-chat-message' events from the client
+    socket.on('send-chat-message', (message) => {
+        const { roomId, username } = socket.data;
+        if (!roomId || !username) return;
+        const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
+        addChatMessageToRoom(roomId, chatMessage);
+        io.to(roomId).emit('chat-message', chatMessage);
+    });
+
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         const { roomId } = socket.data;
@@ -90,6 +105,6 @@ app.get('/{*splat}', (_req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT,() => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
