@@ -692,5 +692,6 @@ input[type="range"]::-moz-range-thumb {
 
   .chat-form {
     padding: 8px 8px 10px;
+    flex-direction: column;
   }
 }
