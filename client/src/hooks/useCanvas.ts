@@ -26,17 +26,61 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isMouseDown.current || !mousePosition.current) return;
-
+        
+        function getCanvasCoords(clientX: number, clientY: number) {
+            if (!canvas) return { x: 0, y: 0 };
             const rect = canvas.getBoundingClientRect();
-            const calculatedX = e.clientX - rect.left;
-            const calculatedY = e.clientY - rect.top;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        // Touchscreen event handlers
+        const handleTouchStart = (e: TouchEvent) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            currentStrokeId.current = crypto.randomUUID();
+            mousePosition.current = getCanvasCoords(touch.clientX, touch.clientY);
+            isMouseDown.current = true;
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            e.preventDefault();
+            if (!isMouseDown.current || !mousePosition.current) return;
+            const touch = e.touches[0];
 
             // Begin drawing the line
-            const newMousePosition = { x: calculatedX, y: calculatedY };
+            const newMousePosition = getCanvasCoords(touch.clientX, touch.clientY);
+            const segment: StrokeSegment = {
+                x0: mousePosition.current!.x,
+                y0: mousePosition.current!.y,
+                x1: newMousePosition.x,
+                y1: newMousePosition.y,
+                color: eraserRef.current ? '#f8f9fa' : colorRef.current,
+                width: brushSizeRef.current,
+                userId: socket?.id || '',
+                strokeId: currentStrokeId.current!
+            };
+            drawSegment(ctx, segment);
+            socket?.emit('on-draw', segment);
+            allStrokes.current.push(segment);
+            socket?.emit('cursor-move', { x: newMousePosition.x, y: newMousePosition.y, username: usernameRef.current, userId: socket.id || '' });
+            mousePosition.current = newMousePosition;
+        };
+
+        const handleTouchEnd = () => {
+            currentStrokeId.current = null;
+            isMouseDown.current = false;
+            mousePosition.current = null;
+        }
+
+        // Mouse event handlers
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isMouseDown.current || !mousePosition.current) return;;
+
+            // Begin drawing the line
+            const newMousePosition = getCanvasCoords(e.clientX, e.clientY);
 
             // Draw the segment locally
             const segment: StrokeSegment = {
@@ -52,14 +96,13 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             drawSegment(ctx, segment);
             socket?.emit('on-draw', segment); // Emit the segment to the server
             allStrokes.current.push(segment);
-            socket?.emit('cursor-move', { x: calculatedX, y: calculatedY, username: usernameRef.current, userId: socket.id || '' }); // Emit cursor position to the server
+            socket?.emit('cursor-move', { x: newMousePosition.x, y: newMousePosition.y, username: usernameRef.current, userId: socket.id || '' }); // Emit cursor position to the server
             mousePosition.current = newMousePosition;
         };
 
         const handleMouseDown = (e: MouseEvent) => {
             currentStrokeId.current = crypto.randomUUID();
-            const rect = canvas.getBoundingClientRect();
-            mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            mousePosition.current = getCanvasCoords(e.clientX, e.clientY);
             isMouseDown.current = true;
         };
 
@@ -69,6 +112,13 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             mousePosition.current = null;
         };
 
+        // Add touch event listeners
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchEnd);
+
+        // Add mouse event listeners
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
         canvas.addEventListener('mouseup', handleMouseUpOrLeave);
@@ -93,6 +143,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             canvas.removeEventListener('mousedown', handleMouseDown);
             canvas.removeEventListener('mouseup', handleMouseUpOrLeave);
             canvas.removeEventListener('mouseleave', handleMouseUpOrLeave);
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', handleTouchEnd);
+            canvas.removeEventListener('touchcancel', handleTouchEnd);
             socket?.off('draw-canvas');
             socket?.off('undo-canvas');
         };
