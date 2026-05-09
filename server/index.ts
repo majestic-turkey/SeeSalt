@@ -87,6 +87,13 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         io.to(roomId).emit('chat-message', chatMessage);
     });
 
+    socket.on('get-chat-history', () => {
+        const { roomId } = socket.data;
+        if (!roomId) return;
+        const history = getRoom(roomId)?.chatHistory ?? [];
+        socket.emit('chat-message', history);
+    });
+
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         const { roomId } = socket.data;

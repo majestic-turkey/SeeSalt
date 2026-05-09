@@ -5,16 +5,7 @@ import useCanvas from "../hooks/useCanvas";
 import Toolbar from "./Toolbar";
 import Chat from "./Chat";
 import type { User } from "../types";
-
-function colorFromId(id: string): string {
-    let hash = 0
-    for (let i = 0; i < id.length; i++) {
-        hash = id.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    const hue = Math.abs(hash) % 360
-    return `hsl(${hue}, 70%, 60%)`
-}
-
+import { colorFromId } from "../utils/canvasUtils";
 
 export default function Room() {
     // Local state
@@ -80,7 +71,7 @@ export default function Room() {
                 <ul className="user-list">
                     {users.map((user) => (
                         <li className="user-item" key={user.id}>
-                            <div className="user-avatar">
+                            <div className="user-avatar" style={{ backgroundColor: colorFromId(user.id) }}>
                                 {user.username.charAt(0).toUpperCase()}
                             </div>
                             <span className="user-name">{user.username}</span>

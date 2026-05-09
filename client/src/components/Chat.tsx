@@ -1,6 +1,7 @@
 import { type JSX, useState, useEffect, useRef } from 'react';
 import useStore from '../store/useStore';
 import type { ChatMessage } from '../types';
+import { colorFromId } from '../utils/canvasUtils';
 
 export default function Chat(): JSX.Element {
     const [chatInput, setChatInput] = useState('');
@@ -44,7 +45,7 @@ export default function Chat(): JSX.Element {
             <div className="chat-messages">
                 {chatMessages.map((msg) => (
                     <p key={`${msg.socketId}-${msg.timestamp}`} className="chat-message">
-                        <strong className="chat-username">{msg.username}:</strong> {msg.message}
+                        <strong className="chat-username" style={{ color: colorFromId(msg.socketId) }}>{msg.username}:</strong> {msg.message}
                     </p>
                 ))}
                 <div ref={messagesEndRef} />
