@@ -27,21 +27,21 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isMouseDown.current || !mousePosition.current) return;
-
+        function getCanvasCoords(clientX: number, clientY: number) {
+            if (!canvas) return { x: 0, y: 0 };
             const rect = canvas.getBoundingClientRect();
-            const calculatedX = e.clientX - rect.left;
-            const calculatedY = e.clientY - rect.top;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
 
-            // Begin drawing the line
-            const newMousePosition = { x: calculatedX, y: calculatedY };
+        function handleDraw(newMousePosition: { x: number; y: number }) {
+            if (!mousePosition.current || !isMouseDown.current || !ctx) return;
 
-            // Draw the segment locally
             const segment: StrokeSegment = {
-                x0: mousePosition.current!.x,
-                y0: mousePosition.current!.y,
+                x0: mousePosition.current.x,
+                y0: mousePosition.current.y,
                 x1: newMousePosition.x,
                 y1: newMousePosition.y,
                 color: eraserRef.current ? '#f8f9fa' : colorRef.current,
@@ -49,18 +49,44 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
                 userId: socket?.id || '',
                 strokeId: currentStrokeId.current!
             };
+
             drawSegment(ctx, segment);
-            socket?.emit('on-draw', segment); // Emit the segment to the server
+            socket?.emit('on-draw', segment);
             allStrokes.current.push(segment);
-            socket?.emit('cursor-move', { x: calculatedX, y: calculatedY, username: usernameRef.current, userId: socket.id || '' }); // Emit cursor position to the server
+            socket?.emit('cursor-move', { x: newMousePosition.x, y: newMousePosition.y, username: usernameRef.current, userId: socket.id || '' });
             mousePosition.current = newMousePosition;
+        }
+
+        function handleDrawStart(clientX: number, clientY: number) {
+            currentStrokeId.current = crypto.randomUUID();
+            mousePosition.current = getCanvasCoords(clientX, clientY);
+            isMouseDown.current = true;
+        }
+
+        // Touchscreen event handlers
+        const handleTouchStart = (e: TouchEvent) => {
+            e.preventDefault();
+            handleDrawStart(e.touches[0].clientX, e.touches[0].clientY);
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            e.preventDefault();
+            handleDraw(getCanvasCoords(e.touches[0].clientX, e.touches[0].clientY));
+        };
+
+        const handleTouchEnd = () => {
+            currentStrokeId.current = null;
+            isMouseDown.current = false;
+            mousePosition.current = null;
+        };
+
+        // Mouse event handlers
+        const handleMouseMove = (e: MouseEvent) => {
+            handleDraw(getCanvasCoords(e.clientX, e.clientY));
         };
 
         const handleMouseDown = (e: MouseEvent) => {
-            currentStrokeId.current = crypto.randomUUID();
-            const rect = canvas.getBoundingClientRect();
-            mousePosition.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-            isMouseDown.current = true;
+            handleDrawStart(e.clientX, e.clientY);
         };
 
         const handleMouseUpOrLeave = () => {
@@ -69,6 +95,13 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             mousePosition.current = null;
         };
 
+        // Add touch event listeners
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchEnd);
+
+        // Add mouse event listeners
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
         canvas.addEventListener('mouseup', handleMouseUpOrLeave);
@@ -93,6 +126,10 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             canvas.removeEventListener('mousedown', handleMouseDown);
             canvas.removeEventListener('mouseup', handleMouseUpOrLeave);
             canvas.removeEventListener('mouseleave', handleMouseUpOrLeave);
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', handleTouchEnd);
+            canvas.removeEventListener('touchcancel', handleTouchEnd);
             socket?.off('draw-canvas');
             socket?.off('undo-canvas');
         };
