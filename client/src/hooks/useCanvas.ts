@@ -1,6 +1,8 @@
 import { useRef, useEffect } from 'react';
 import useStore from '../store/useStore';
 import type { StrokeSegment } from '../types';
+import useDrawSync from './useDrawSync';
+import { drawSegment } from '../utils/canvasUtils';
 
 export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): { canvasRef: React.RefObject<HTMLCanvasElement>, saveAsPng: () => void, undo: () => void } {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -13,6 +15,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const eraserRef = useRef(eraser);
     const allStrokes = useRef<StrokeSegment[]>([]);
     const currentStrokeId = useRef<string | null>(null);
+    const { emitDraw, emitUndo } = useDrawSync(allStrokes, canvasRef);
 
     useEffect(() => {
         colorRef.current = color;
@@ -20,13 +23,13 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         eraserRef.current = eraser;
         usernameRef.current = username;
     }, [color, brushSize, eraser, username]);
-
+    
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-
+        
         function getCanvasCoords(clientX: number, clientY: number) {
             if (!canvas) return { x: 0, y: 0 };
             const rect = canvas.getBoundingClientRect();
@@ -51,7 +54,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             };
 
             drawSegment(ctx, segment);
-            socket?.emit('on-draw', segment);
+            emitDraw(segment);
             allStrokes.current.push(segment);
             socket?.emit('cursor-move', { x: newMousePosition.x, y: newMousePosition.y, username: usernameRef.current, userId: socket.id || '' });
             mousePosition.current = newMousePosition;
@@ -107,19 +110,6 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         canvas.addEventListener('mouseup', handleMouseUpOrLeave);
         canvas.addEventListener('mouseleave', handleMouseUpOrLeave);
 
-        // Listen for 'draw-canvas' events from the server
-        socket?.on('draw-canvas', (segment: StrokeSegment) => {
-            allStrokes.current.push(segment);
-            drawSegment(ctx, segment);
-        });
-
-        // Listen for 'undo-canvas' events from the server
-        socket?.on('undo-canvas', (payload: { strokeId: string; userId: string }) => {
-            allStrokes.current = allStrokes.current.filter(segment => segment.strokeId !== payload.strokeId);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            allStrokes.current.forEach(segment => drawSegment(ctx, segment));
-        });
-
         // Cleanup event listeners and socket listeners on unmount
         return () => {
             canvas.removeEventListener('mousemove', handleMouseMove);
@@ -130,24 +120,9 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             canvas.removeEventListener('touchcancel', handleTouchEnd);
-            socket?.off('draw-canvas');
-            socket?.off('undo-canvas');
         };
 
-    }, [socket]);
-
-    function drawSegment(
-        ctx: CanvasRenderingContext2D,
-        segment: StrokeSegment
-    ) {
-        ctx.beginPath()
-        ctx.moveTo(segment.x0, segment.y0)
-        ctx.lineTo(segment.x1, segment.y1)
-        ctx.strokeStyle = segment.color
-        ctx.lineWidth = segment.width
-        ctx.lineCap = 'round'
-        ctx.stroke()
-    }
+    }, [socket, emitDraw, emitUndo]);
 
     const saveAsPng = () => {
         const canvas = canvasRef.current;
@@ -171,7 +146,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         allStrokes.current = allStrokes.current.filter(s => s.strokeId !== strokeId)
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         allStrokes.current.forEach(s => drawSegment(ctx, s))
-        socket?.emit('undo', { strokeId, userId: socket.id })
+        emitUndo(strokeId)
     }
 
     return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo };
