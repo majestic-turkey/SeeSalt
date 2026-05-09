@@ -10,7 +10,7 @@ function App(): JSX.Element {
   const { setSocket, setUsers } = useStore();
 
   useEffect(() => {
-    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io('http://localhost:3000');
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
     setSocket(socket);
 
     socket.on('room-users', (users) => {

@@ -3,16 +3,28 @@ export interface User {
     username: string
 }
 
+export interface ChatMessage {
+    socketId: string;
+    username: string;
+    message: string;
+    timestamp: number;
+}
+
 export interface ClientToServerEvents {
     'join-room': (payload: { roomId: string; username: string}) => void
     'on-draw': (payload: StrokeSegment) => void
     'cursor-move': (payload: { x: number; y: number; username: string; userId: string }) => void
+    'undo': (payload: { strokeId: string; userId: string }) => void
+    'send-chat-message': (message: string) => void
+    'get-chat-history': () => void
 }
 
 export interface ServerToClientEvents {
     'room-users': (users: User[]) => void
     'draw-canvas': (payload: StrokeSegment) => void
     'cursor-update': (payload: { x: number; y: number; username: string; userId: string }) => void
+    'undo-canvas': (payload: { strokeId: string; userId: string }) => void
+    'chat-message': (payload: ChatMessage | ChatMessage[]) => void
 }
 
 export interface Room {
@@ -26,4 +38,6 @@ export interface StrokeSegment {
     x1: number; y1: number; // To coordinates
     color: string; // Stroke color
     width: number; // Stroke width
+    userId: string; // ID of the user who drew this segment
+    strokeId: string; // Unique ID for this stroke segment
 }

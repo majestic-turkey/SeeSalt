@@ -31,19 +31,50 @@ export default function Lobby(): JSX.Element {
         navigate(`/room/${roomCode}`);
     };
 
-    return (<>
-        <h1>Lobby</h1>
-        <label>Room code:
-            <input type="text" pattern="[A-Za-z0-9]{6}" value={roomCode} onChange={(e) => setRoomCode(e.target.value)} />
-        </label>
-        <label>Username: 
-            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} />
-        </label>
-        <button onClick={handleCreateRoom}>
-            Create Room
-        </button>
-        <button onClick={handleJoinRoom}>
-            Join Room
-        </button>
-    </>)
+    return (
+        <div className="lobby">
+            <div className="lobby-brand">
+                <div className="lobby-logo">🎨</div>
+                <h1 className="lobby-title">SeeSalt</h1>
+            </div>
+            <p className="lobby-subtitle">Real-time collaborative drawing</p>
+
+            <div className="lobby-card">
+                <div className="lobby-fields">
+                    <div className="field">
+                        <label htmlFor="username-input">Username</label>
+                        <input
+                            id="username-input"
+                            type="text"
+                            placeholder="Enter your name…"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="room-input">Room Code</label>
+                        <input
+                            id="room-input"
+                            type="text"
+                            pattern="[A-Za-z0-9]{6}"
+                            placeholder="6-character code to join"
+                            value={roomCode}
+                            onChange={(e) => setRoomCode(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <hr className="lobby-divider" />
+
+                <div className="lobby-actions">
+                    <button className="btn btn-primary" onClick={handleCreateRoom}>
+                        ✦ Create Room
+                    </button>
+                    <button className="btn btn-secondary" onClick={handleJoinRoom}>
+                        → Join Room
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
 }
