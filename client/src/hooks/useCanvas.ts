@@ -57,9 +57,9 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             mousePosition.current = newMousePosition;
         }
 
-        function handleDrawStart(x: number, y: number) {
+        function handleDrawStart(clientX: number, clientY: number) {
             currentStrokeId.current = crypto.randomUUID();
-            mousePosition.current = getCanvasCoords(x, y);
+            mousePosition.current = getCanvasCoords(clientX, clientY);
             isMouseDown.current = true;
         }
 
@@ -67,7 +67,6 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         const handleTouchStart = (e: TouchEvent) => {
             e.preventDefault();
             handleDrawStart(e.touches[0].clientX, e.touches[0].clientY);
-
         };
 
         const handleTouchMove = (e: TouchEvent) => {
@@ -79,7 +78,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
             currentStrokeId.current = null;
             isMouseDown.current = false;
             mousePosition.current = null;
-        }
+        };
 
         // Mouse event handlers
         const handleMouseMove = (e: MouseEvent) => {
