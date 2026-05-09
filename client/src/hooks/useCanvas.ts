@@ -23,13 +23,13 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         eraserRef.current = eraser;
         usernameRef.current = username;
     }, [color, brushSize, eraser, username]);
-    
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
+
         function getCanvasCoords(clientX: number, clientY: number) {
             if (!canvas) return { x: 0, y: 0 };
             const rect = canvas.getBoundingClientRect();
@@ -55,7 +55,6 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
 
             drawSegment(ctx, segment);
             emitDraw(segment);
-            allStrokes.current.push(segment);
             socket?.emit('cursor-move', { x: newMousePosition.x, y: newMousePosition.y, username: usernameRef.current, userId: socket.id || '' });
             mousePosition.current = newMousePosition;
         }
@@ -143,7 +142,8 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        allStrokes.current = allStrokes.current.filter(s => s.strokeId !== strokeId)
+        const filtered = allStrokes.current.filter(s => s.strokeId !== strokeId)
+        allStrokes.current.splice(0, allStrokes.current.length, ...filtered)
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         allStrokes.current.forEach(s => drawSegment(ctx, s))
         emitUndo(strokeId)

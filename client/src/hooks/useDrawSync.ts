@@ -1,6 +1,6 @@
 import type { StrokeSegment } from '../types';
 import useStore from '../store/useStore';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { drawSegment } from '../utils/canvasUtils';
 
 export default function useDrawSync(
@@ -34,14 +34,14 @@ export default function useDrawSync(
         }
     }, [socket, canvasRef, allStrokes]);
 
-    function emitDraw(segment: StrokeSegment) {
+    const emitDraw = useCallback((segment: StrokeSegment) => {
         allStrokes.current.push(segment)
         socket?.emit('on-draw', segment)
-    }
+    }, [socket, allStrokes]);
 
-    function emitUndo(strokeId: string) {
+    const emitUndo = useCallback((strokeId: string) => {
         socket?.emit('undo', { strokeId, userId: socket?.id || '' })
-    }
+    }, [socket]);
 
     return { emitDraw, emitUndo }
 }
