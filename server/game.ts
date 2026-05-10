@@ -52,3 +52,17 @@ export function nextDrawer(roomId: string, users: User[]): GameState {
 
     return gameState;
 }
+
+export function handleCorrectGuess(roomId: string, users: User[], onTimeout: () => void): GameState {
+    const gameState = gameStates[roomId];
+    if (!gameState) {
+        throw new Error('Game not found');
+    }
+
+    gameState.correctGuessTimeout = setTimeout(() => {
+        nextDrawer(roomId, users);
+        onTimeout();
+    }, 15000);
+
+    return gameState;
+}
