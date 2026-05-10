@@ -8,8 +8,9 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
-    const { socket } = useStore();
+    const { socket, currentDrawerId } = useStore();
     const usernameRef = useRef(username);
+    const drawerRef = useRef(currentDrawerId);
     const colorRef = useRef(color);
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
@@ -22,7 +23,8 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         brushSizeRef.current = brushSize;
         eraserRef.current = eraser;
         usernameRef.current = username;
-    }, [color, brushSize, eraser, username]);
+        drawerRef.current = currentDrawerId;
+    }, [color, brushSize, eraser, username, currentDrawerId]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -41,6 +43,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
 
         function handleDraw(newMousePosition: { x: number; y: number }) {
             if (!mousePosition.current || !isMouseDown.current || !ctx) return;
+            if (drawerRef.current !== socket?.id) return;
 
             const segment: StrokeSegment = {
                 x0: mousePosition.current.x,

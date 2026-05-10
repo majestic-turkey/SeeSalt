@@ -7,7 +7,7 @@ import Lobby from './components/Lobby.tsx';
 import Room from './components/Room.tsx';
 
 function App(): JSX.Element {
-  const { setSocket, setUsers } = useStore();
+  const { setSocket, setUsers, setIsPlaying, setCurrentDrawerId, setCurrentWord } = useStore();
 
   useEffect(() => {
     const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
@@ -17,10 +17,33 @@ function App(): JSX.Element {
       setUsers(users);
     });
 
+    socket.on('game-started', (state) => {
+      setIsPlaying(true)
+      setCurrentDrawerId(state.currentDrawerId)
+    })
+
+    socket.on('your-word', (word) => {
+      setCurrentWord(word)
+    })
+
+    socket.on('next-turn', (state) => {
+      setCurrentDrawerId(state.drawerId)
+      setCurrentWord(null) // clear word for everyone, drawer gets it via your-word
+    })
+
+    socket.on('correct-guess', (payload) => {
+      alert(`${payload.username} guessed the word "${payload.word}" correctly!`)
+    })
+
     return () => {
+      socket.off('game-started')
+      socket.off('your-word')
+      socket.off('next-turn')
+      socket.off('correct-guess')
+      socket.off('room-users')
       socket.disconnect();
     };
-  }, [setSocket, setUsers]);
+  }, [setSocket, setUsers, setIsPlaying, setCurrentDrawerId, setCurrentWord]);
 
 
   return (
