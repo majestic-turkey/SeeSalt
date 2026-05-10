@@ -1,7 +1,7 @@
 import { User } from './types';
 import words from './words.json';
 
-interface GameState {
+export interface GameState {
     isPlaying: boolean;
     currentDrawerId: string | null;
     currentWord: string | null;

@@ -26,8 +26,8 @@ export interface ServerToClientEvents {
     'cursor-update': (payload: { x: number; y: number; username: string; userId: string }) => void
     'undo-canvas': (payload: { strokeId: string; userId: string }) => void
     'chat-message': (payload: ChatMessage | ChatMessage[]) => void
-    'game-started': () => void
-    'your-word': (word: string) => void
+    'game-started': (payload: { currentDrawerId: string | null; drawerIndex: number }) => void
+    'your-word': (payload: string | null) => void
     'correct-guess': (payload: { username: string; word: string }) => void
     'next-turn': (payload: { drawerId: string; drawerUsername: string }) => void
     'game-state': (payload: { currentDrawer: string; wordLength: number; timeLeft: number }) => void
