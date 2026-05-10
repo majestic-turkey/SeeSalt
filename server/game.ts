@@ -66,3 +66,25 @@ export function handleCorrectGuess(roomId: string, users: User[], onTimeout: () 
 
     return gameState;
 }
+
+export function getGameState(roomId: string): GameState | null {
+    return gameStates[roomId] || null;
+}
+
+export function handlePlayerLeave(roomId: string, userId: string, users: User[]): GameState | null {
+    const gameState = gameStates[roomId];
+    if (!gameState) {
+        console.error('Game not found for room:', roomId);
+        return null;
+    }
+    if (gameState.currentDrawerId === userId && users.length === 0) {
+        gameStates[roomId].isPlaying = false;
+        return null;
+    }
+    if (gameState.currentDrawerId === userId) {
+        nextDrawer(roomId, users);
+        return gameState;
+    } else {
+        return gameState;
+    }
+}
