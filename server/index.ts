@@ -5,7 +5,7 @@ import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
 import { addStrokeToRoom, addChatMessageToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
-import { type GameState, startGame } from './game.ts';
+import { type GameState, startGame, getGameState, handleCorrectGuess, nextDrawer } from './game.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -85,7 +85,26 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
+
+        // Emit the new chat message to all clients in the room
         io.to(roomId).emit('chat-message', chatMessage);
+
+        // Handle guesses from the non-drawer
+        const newState = getGameState(roomId);
+        if (newState && newState.isPlaying && newState.currentDrawerId !== socket.id) {
+            const guess = message.trim().toLowerCase();
+            const word = newState.currentWord?.toLowerCase();
+            if (guess === word) {
+                const updatedState = handleCorrectGuess(roomId, getRoom(roomId)?.users ?? [], () => {
+                    io.to(roomId).emit('next-turn', {
+                        drawerId: updatedState.currentDrawerId!,
+                        drawerUsername: getRoom(roomId)?.users.find(u => u.id === updatedState.currentDrawerId)?.username ?? ''
+                    });
+                    io.to(updatedState.currentDrawerId!).emit('your-word', updatedState.currentWord)
+                });
+                io.to(roomId).emit('correct-guess', { username, word: updatedState.currentWord! });
+            }
+        }
     });
 
     socket.on('get-chat-history', () => {
