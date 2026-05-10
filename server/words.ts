@@ -1,4 +1,4 @@
-[
+const words = [
   "Swing",
   "Coat",
   "Shoe",
@@ -425,3 +425,5 @@
   "Snowball",
   "Purse"
 ]
+
+export default words;

@@ -1,5 +1,5 @@
-import { User } from './types';
-import words from './words.json';
+import type { User } from './types.ts';
+import words from './words.ts';
 
 export interface GameState {
     isPlaying: boolean;
