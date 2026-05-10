@@ -6,7 +6,7 @@ import Toolbar from "./Toolbar";
 import Chat from "./Chat";
 import type { User } from "../types";
 import { colorFromId } from "../utils/canvasUtils";
-import { startTimer, timeLeft } from "../hooks/useGameTimer";
+import useGameTimer from "../hooks/useGameTimer";
 
 export default function Room() {
     // Local state
@@ -14,13 +14,20 @@ export default function Room() {
     const [brushSize, setBrushSize] = useState(4);
     const [eraser, setEraser] = useState(false);
     const [cursors, setCursors] = useState<Record<string, { x: number; y: number; username: string }>>({});
+    const [correctGuesser, setCorrectGuesser] = useState<string | null>(null);
+
+    // Global state and utilities
 
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { username, users, socket, currentDrawerId } = useStore();
-    const { canvasRef, saveAsPng, undo } = useCanvas(color, brushSize, eraser, username);
+    const { username, users, socket, currentDrawerId, isPlaying, currentWord } = useStore();
+    const { canvasRef, saveAsPng, undo, clearStrokes } = useCanvas(color, brushSize, eraser, username);
 
     const isDrawer = currentDrawerId === socket?.id
+    const { timeLeft, startTimer } = useGameTimer(() => {
+        // Clear UI when timer completes
+        setCursors({});
+    });
 
     useEffect(() => {
         if (!roomId || !username || !socket) {
@@ -32,13 +39,32 @@ export default function Room() {
 
     useEffect(() => {
         if (!socket) return;
+
+        // Handle cursor updates from other users
         socket.on('cursor-update', (payload) => {
             setCursors((prev) => ({ ...prev, [payload.userId]: payload }));
         });
+
+        // Handle correct guess logic
+        socket?.on('correct-guess', (payload: { username: string }) => {
+            startTimer(15); // Start a 15 second timer for the next turn
+            setCorrectGuesser(payload.username);
+        });
+
+        // Handle next turn logic
+        socket?.on('next-turn', () => {
+            setCursors({});
+            canvasRef.current?.getContext('2d')?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            clearStrokes();
+            setCorrectGuesser(null);
+        });
+
         return () => {
             socket.off('cursor-update');
+            socket.off('correct-guess');
+            socket.off('next-turn');
         };
-    }, [socket]);
+    }, [socket, canvasRef, startTimer, clearStrokes]);
 
     // Listen for users to leave the room and remove their cursors
     useEffect(() => {
@@ -126,6 +152,19 @@ export default function Room() {
                         </div>
                     </div>
                 </div>
+                {isPlaying && (
+                    <div className="status-bar">
+                        {timeLeft !== null
+                            ? <p>{correctGuesser} guessed it! Next turn in {timeLeft}s — the word was "{currentWord}"</p>
+                            : isDrawer
+                                ? <p>Draw: <strong>{currentWord}</strong></p>
+                                : <p>{users.find(u => u.id === currentDrawerId)?.username} is drawing — guess in chat!</p>
+                        }
+                    </div>
+                )}
+                {!isPlaying && (
+                    <button onClick={() => socket?.emit('start-game')}>Start Game</button>
+                )}
                 <Toolbar
                     color={color}
                     setColor={setColor}

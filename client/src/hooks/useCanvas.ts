@@ -4,7 +4,17 @@ import type { StrokeSegment } from '../types';
 import useDrawSync from './useDrawSync';
 import { drawSegment } from '../utils/canvasUtils';
 
-export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): { canvasRef: React.RefObject<HTMLCanvasElement>, saveAsPng: () => void, undo: () => void } {
+export default function useCanvas(
+    color: string,
+    brushSize: number,
+    eraser: boolean,
+    username: string
+): {
+    canvasRef: React.RefObject<HTMLCanvasElement>,
+    saveAsPng: () => void,
+    undo: () => void,
+    clearStrokes: () => void
+} {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
@@ -16,7 +26,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
     const eraserRef = useRef(eraser);
     const allStrokes = useRef<StrokeSegment[]>([]);
     const currentStrokeId = useRef<string | null>(null);
-    const { emitDraw, emitUndo } = useDrawSync(allStrokes, canvasRef);
+    const { emitDraw, emitUndo, clearStrokes } = useDrawSync(allStrokes, canvasRef);
 
     useEffect(() => {
         colorRef.current = color;
@@ -152,5 +162,5 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         emitUndo(strokeId)
     }
 
-    return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo };
+    return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo, clearStrokes };
 }

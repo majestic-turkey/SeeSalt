@@ -6,7 +6,12 @@ import { drawSegment } from '../utils/canvasUtils';
 export default function useDrawSync(
     allStrokes: React.RefObject<StrokeSegment[]>,
     canvasRef: React.RefObject<HTMLCanvasElement | null>
-): { emitDraw: (segment: StrokeSegment) => void, emitUndo: (strokeId: string) => void } {
+): {
+    emitDraw: (segment: StrokeSegment) => void,
+    emitUndo: (strokeId: string) => void,
+    clearStrokes: () => void 
+} {
+
     const { socket } = useStore();
 
     useEffect(() => {
@@ -43,5 +48,9 @@ export default function useDrawSync(
         socket?.emit('undo', { strokeId, userId: socket?.id || '' })
     }, [socket]);
 
-    return { emitDraw, emitUndo }
+    const clearStrokes = useCallback(() => {
+        allStrokes.current.splice(0, allStrokes.current.length);
+    }, [allStrokes]);
+
+    return { emitDraw, emitUndo, clearStrokes }
 }

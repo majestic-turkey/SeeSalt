@@ -29,7 +29,7 @@ export interface ServerToClientEvents {
     'chat-message': (payload: ChatMessage | ChatMessage[]) => void
     'game-started': (state: { currentDrawerId: string }) => void
     'your-word': (word: string) => void
-    'correct-guess': (payload: { username: string; word: string }) => void
+    'correct-guess': (payload: { username: string }) => void
     'next-turn': (payload: { drawerId: string; drawerUsername: string }) => void
     'game-state': (payload: { currentDrawer: string; wordLength: number; timeLeft: number }) => void
 }
