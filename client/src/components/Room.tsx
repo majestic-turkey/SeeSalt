@@ -6,6 +6,7 @@ import Toolbar from "./Toolbar";
 import Chat from "./Chat";
 import type { User } from "../types";
 import { colorFromId } from "../utils/canvasUtils";
+import { startTimer, timeLeft } from "../hooks/useGameTimer";
 
 export default function Room() {
     // Local state
@@ -16,8 +17,10 @@ export default function Room() {
 
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { username, users, socket } = useStore();
+    const { username, users, socket, currentDrawerId } = useStore();
     const { canvasRef, saveAsPng, undo } = useCanvas(color, brushSize, eraser, username);
+
+    const isDrawer = currentDrawerId === socket?.id
 
     useEffect(() => {
         if (!roomId || !username || !socket) {

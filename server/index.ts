@@ -118,6 +118,9 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     socket.on('start-game', () => {
         const gameState: GameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? []);
         if (!gameState) return;
+        const oldState = getGameState(socket.data.roomId);
+        if (oldState?.isPlaying) return; // Prevent restarting an ongoing game
+
         io.to(socket.data.roomId).emit('game-started', {
             currentDrawerId: gameState.currentDrawerId,
             drawerIndex: gameState.drawerIndex
