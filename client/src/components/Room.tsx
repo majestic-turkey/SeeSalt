@@ -163,7 +163,11 @@ export default function Room() {
                     </div>
                 )}
                 {!isPlaying && (
-                    <button onClick={() => socket?.emit('start-game')}>Start Game</button>
+                    <button onClick={() => {
+                        socket?.emit('start-game')
+                        console.log(`Emitted start-game event from client: ${socket?.id}`);
+                    }
+                }>Start Game</button>
                 )}
                 <Toolbar
                     color={color}

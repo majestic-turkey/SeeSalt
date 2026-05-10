@@ -80,8 +80,7 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     });
 
     // Listen for 'send-chat-message' events from the client
-    socket.on('send-chat-message', (message) => {
-        const { roomId, username } = socket.data;
+    socket.on('send-chat-message', (message) => {const { roomId, username } = socket.data;
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
@@ -116,18 +115,15 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
 
     // Listen for 'start-game' events from the client
     socket.on('start-game', () => {
-        const gameState: GameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? []);
-        if (!gameState) return;
-        const oldState = getGameState(socket.data.roomId);
-        if (oldState?.isPlaying) return; // Prevent restarting an ongoing game
-
+        const gameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? [])
         io.to(socket.data.roomId).emit('game-started', {
             currentDrawerId: gameState.currentDrawerId,
             drawerIndex: gameState.drawerIndex
-        });
-        if (!gameState.currentDrawerId) return;
-        io.to(gameState.currentDrawerId).emit('your-word', gameState.currentWord);
-    });
+        })
+        if (gameState.currentDrawerId) {
+            io.to(gameState.currentDrawerId).emit('your-word', gameState.currentWord)
+        }
+    })
 
     // Cleanup on disconnect
     socket.on('disconnect', () => {

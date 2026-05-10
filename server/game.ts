@@ -74,7 +74,6 @@ export function getGameState(roomId: string): GameState | null {
 export function handlePlayerLeave(roomId: string, userId: string, users: User[]): GameState | null {
     const gameState = gameStates[roomId];
     if (!gameState) {
-        console.error('Game not found for room:', roomId);
         return null;
     }
     if (gameState.currentDrawerId === userId && users.length === 0) {
