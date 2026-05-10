@@ -5,7 +5,7 @@ import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
 import { addStrokeToRoom, addChatMessageToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
-import { type GameState, startGame, getGameState, handleCorrectGuess, nextDrawer } from './game.ts';
+import { type GameState, startGame, getGameState, handleCorrectGuess, handlePlayerLeave } from './game.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -133,8 +133,18 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
 
         leaveRoom(roomId, socket.id);
 
+        const newState = handlePlayerLeave(roomId, socket.id, getRoom(roomId)?.users ?? []);
         const room = getRoom(roomId);
         io.to(roomId).emit('room-users', room?.users ?? []);
+
+        if (!newState?.isPlaying) return;
+
+        io.to(roomId).emit('next-turn', {
+            drawerId: newState?.currentDrawerId!,
+            drawerUsername: getRoom(roomId)?.users.find(u => u.id === newState?.currentDrawerId)?.username ?? ''
+        });
+
+        io.to(newState.currentDrawerId!).emit('your-word', newState.currentWord);
     })
 });
 
