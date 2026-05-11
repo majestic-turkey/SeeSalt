@@ -1,7 +1,9 @@
 # SeeSalt
 
 SeeSalt is a real-time collaborative drawing app with room-based sessions.
-Users can create or join a room, draw together on a shared canvas, see other users online, and receive live cursor updates.
+Version 1.0.0 is the first stable release.
+
+Users can create or join a room, draw together on a shared canvas, see online participants, chat, and play turn-based drawing rounds.
 
 ## What it does
 
@@ -10,6 +12,8 @@ Users can create or join a room, draw together on a shared canvas, see other use
 - Shared canvas state replay for newly joined users
 - User presence list per room
 - Live remote cursor positions
+- In-room real-time chat
+- Turn-based game flow with a Start Game action
 - Brush, eraser, stroke size, and color controls
 - Undo for your most recent stroke
 - Export current canvas to PNG
@@ -68,7 +72,7 @@ cd client
 npm run dev
 ```
 
-Server runs on port 3000 by default, can be exported to .env PORT variable.
+Server runs on port 3000 by default, configurable via `PORT`.
 
 ## Available scripts
 
@@ -81,9 +85,7 @@ Server runs on port 3000 by default, can be exported to .env PORT variable.
 
 ### Server (`server/package.json`)
 
-No development scripts are currently defined.
-Use `npx tsx index.ts` to run the server in development.
-Use `nodemon index.ts` for hot reloads (will need to install nodemon with `npm i -d nodemon`).
+- `npx tsx index.ts` - run the server in development
 
 ## How rooms work
 
@@ -99,6 +101,8 @@ Main Socket.IO events:
 
 - Client -> Server: `join-room`, `on-draw`, `cursor-move`, `undo`
 - Server -> Client: `room-users`, `draw-canvas`, `cursor-update`, `undo-canvas`
+
+Game-related events include `start-game`, `correct-guess`, and `next-turn`.
 
 NB: Each event is in order, so `join-room` reciprocates `room-users` and so forth.
 
@@ -122,14 +126,9 @@ npx tsx index.ts
 
 The server listens on `PORT` or defaults to `3000`.
 
-## Current limitations
+## Notes
 
 - Server data is in-memory only (rooms/strokes are lost on restart).
 - Client socket URL is currently hardcoded to `http://localhost:3000`.
-- No auth, rate limiting, or persistent storage yet.
-
-## Suggested next improvements
-
-- Persist rooms/strokes in Redis or a database.
-- Add support for touchscreens
-- Integrate other use-cases (e.g. chat for virtual meetings, Pictionary-style interactivity)
+- No auth or persistent storage in this release.
+- No languages were harmed in the making of this app
