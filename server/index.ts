@@ -80,8 +80,7 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     });
 
     // Listen for 'send-chat-message' events from the client
-    socket.on('send-chat-message', (message) => {
-        const { roomId, username } = socket.data;
+    socket.on('send-chat-message', (message) => {const { roomId, username } = socket.data;
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
@@ -128,10 +127,11 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         io.to(socket.data.roomId).emit('game-started', {
             currentDrawerId: gameState.currentDrawerId,
             drawerIndex: gameState.drawerIndex
-        });
-        if (!gameState.currentDrawerId) return;
-        io.to(gameState.currentDrawerId).emit('your-word', gameState.currentWord);
-    });
+        })
+        if (gameState.currentDrawerId) {
+            io.to(gameState.currentDrawerId).emit('your-word', gameState.currentWord)
+        }
+    })
 
     // Cleanup on disconnect
     socket.on('disconnect', () => {
