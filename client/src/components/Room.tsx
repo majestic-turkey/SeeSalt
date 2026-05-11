@@ -40,29 +40,35 @@ export default function Room() {
     useEffect(() => {
         if (!socket) return;
 
-        // Handle cursor updates from other users
-        socket.on('cursor-update', (payload) => {
+        const handleCursorUpdate = (payload: { userId: string; x: number; y: number; username: string }) => {
             setCursors((prev) => ({ ...prev, [payload.userId]: payload }));
-        });
+        }
 
-        // Handle correct guess logic
-        socket?.on('correct-guess', (payload: { username: string }) => {
-            startTimer(15); // Start a 15 second timer for the next turn
-            setCorrectGuesser(payload.username);
-        });
-
-        // Handle next turn logic
-        socket?.on('next-turn', () => {
+        const handleNextTurn = () => {
             setCursors({});
             canvasRef.current?.getContext('2d')?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             clearStrokes();
             setCorrectGuesser(null);
-        });
+        }
+
+        const handleCorrectGuess = (payload: { username: string }) => {
+            startTimer(15);
+            setCorrectGuesser(payload.username);
+        }
+
+        // Handle cursor updates from other users
+            socket.on('cursor-update', handleCursorUpdate);
+
+        // Handle correct guess logic
+        socket?.on('correct-guess', handleCorrectGuess);
+
+        // Handle next turn logic
+        socket?.on('next-turn', handleNextTurn);
 
         return () => {
-            socket.off('cursor-update');
-            socket.off('correct-guess');
-            socket.off('next-turn');
+            socket.off('cursor-update', handleCursorUpdate);
+            socket.off('correct-guess', handleCorrectGuess);
+            socket.off('next-turn', handleNextTurn);
         };
     }, [socket, canvasRef, startTimer, clearStrokes]);
 

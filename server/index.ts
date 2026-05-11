@@ -96,6 +96,9 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
             const word = newState.currentWord?.toLowerCase();
             if (guess === word) {
                 const updatedState = handleCorrectGuess(roomId, getRoom(roomId)?.users ?? [], () => {
+                    console.log('timeout fired')
+                    console.log('new drawer:', updatedState.currentDrawerId)
+                    console.log('new word:', updatedState.currentWord)
                     io.to(roomId).emit('next-turn', {
                         drawerId: updatedState.currentDrawerId!,
                         drawerUsername: getRoom(roomId)?.users.find(u => u.id === updatedState.currentDrawerId)?.username ?? ''
@@ -116,10 +119,11 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
 
     // Listen for 'start-game' events from the client
     socket.on('start-game', () => {
-        const gameState: GameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? []);
-        if (!gameState) return;
         const oldState = getGameState(socket.data.roomId);
         if (oldState?.isPlaying) return; // Prevent restarting an ongoing game
+
+        const gameState: GameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? []);
+        if (!gameState) return;
 
         io.to(socket.data.roomId).emit('game-started', {
             currentDrawerId: gameState.currentDrawerId,
