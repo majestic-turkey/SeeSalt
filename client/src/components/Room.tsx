@@ -6,6 +6,7 @@ import Toolbar from "./Toolbar";
 import Chat from "./Chat";
 import type { User } from "../types";
 import { colorFromId } from "../utils/canvasUtils";
+import useGameTimer from "../hooks/useGameTimer";
 
 export default function Room() {
     // Local state
@@ -13,11 +14,21 @@ export default function Room() {
     const [brushSize, setBrushSize] = useState(4);
     const [eraser, setEraser] = useState(false);
     const [cursors, setCursors] = useState<Record<string, { x: number; y: number; username: string }>>({});
+    const [correctGuesser, setCorrectGuesser] = useState<string | null>(null);
+    const [guessedWord, setGuessedWord] = useState<string | null>(null);
+
+    // Global state and utilities
 
     const { roomId } = useParams();
     const navigate = useNavigate();
-    const { username, users, socket } = useStore();
-    const { canvasRef, saveAsPng, undo } = useCanvas(color, brushSize, eraser, username);
+    const { username, users, socket, currentDrawerId, isPlaying, currentWord } = useStore();
+    const { canvasRef, saveAsPng, undo, clearStrokes } = useCanvas(color, brushSize, eraser, username);
+
+    const isDrawer = currentDrawerId === socket?.id
+    const { timeLeft, startTimer } = useGameTimer(() => {
+        // Clear UI when timer completes
+        setCursors({});
+    });
 
     useEffect(() => {
         if (!roomId || !username || !socket) {
@@ -29,13 +40,41 @@ export default function Room() {
 
     useEffect(() => {
         if (!socket) return;
-        socket.on('cursor-update', (payload) => {
+
+        const handleCursorUpdate = (payload: { userId: string; x: number; y: number; username: string }) => {
             setCursors((prev) => ({ ...prev, [payload.userId]: payload }));
-        });
+        }
+
+        const handleNextTurn = () => {
+            setCursors({});
+            canvasRef.current?.getContext('2d')?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            clearStrokes();
+            setCorrectGuesser(null);
+            setGuessedWord(null);
+        }
+
+        const handleCorrectGuess = (payload: { username: string, word: string }) => {
+            console.log('correct-guess received:', payload)
+            startTimer(15);
+            setCorrectGuesser(payload.username);
+            setGuessedWord(payload.word);
+        }
+
+        // Handle cursor updates from other users
+            socket.on('cursor-update', handleCursorUpdate);
+
+        // Handle correct guess logic
+        socket?.on('correct-guess', handleCorrectGuess);
+
+        // Handle next turn logic
+        socket?.on('next-turn', handleNextTurn);
+
         return () => {
-            socket.off('cursor-update');
+            socket.off('cursor-update', handleCursorUpdate);
+            socket.off('correct-guess', handleCorrectGuess);
+            socket.off('next-turn', handleNextTurn);
         };
-    }, [socket]);
+    }, [socket, canvasRef, startTimer, clearStrokes, currentWord]);
 
     // Listen for users to leave the room and remove their cursors
     useEffect(() => {
@@ -123,6 +162,25 @@ export default function Room() {
                         </div>
                     </div>
                 </div>
+                {isPlaying && (
+                    <div className="status-bar">
+                        {timeLeft !== null
+                            ? <p>{correctGuesser} guessed it! Next turn in {timeLeft}s — the word was "{guessedWord}"</p>
+                            : isDrawer
+                                ? <p>Draw: <strong>{currentWord}</strong></p>
+                                : <p>{users.find(u => u.id === currentDrawerId)?.username} is drawing — guess in chat!</p>
+                        }
+                    </div>
+                )}
+                {!isPlaying && (
+                    <button
+                        className="btn btn-primary start-game-btn"
+                        onClick={() => {
+                            socket?.emit('start-game')
+                            console.log(`Emitted start-game event from client: ${socket?.id}`);
+                        }}
+                    >Start Game</button>
+                )}
                 <Toolbar
                     color={color}
                     setColor={setColor}

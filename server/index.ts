@@ -5,6 +5,7 @@ import path from 'path';
 import type { ClientToServerEvents, ServerToClientEvents } from './types.ts';
 import { fileURLToPath } from 'url';
 import { addStrokeToRoom, addChatMessageToRoom, getRoom, joinRoom, leaveRoom } from './rooms.ts';
+import { type GameState, startGame, getGameState, handleCorrectGuess, handlePlayerLeave } from './game.ts';
 
 // Create an Express application and mount middleware
 const app = express();
@@ -84,7 +85,27 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
+
+        // Emit the new chat message to all clients in the room
         io.to(roomId).emit('chat-message', chatMessage);
+
+        // Handle guesses from the non-drawer
+        const newState = getGameState(roomId);
+        if (newState && newState.isPlaying && newState.currentDrawerId !== socket.id) {
+            const guess = message.trim().toLowerCase();
+            const word = newState.currentWord?.toLowerCase();
+            if (guess === word) {
+                const updatedState = handleCorrectGuess(roomId, getRoom(roomId)?.users ?? [], () => {
+                    io.to(roomId).emit('next-turn', {
+                        drawerId: updatedState.currentDrawerId!,
+                        drawerUsername: getRoom(roomId)?.users.find(u => u.id === updatedState.currentDrawerId)?.username ?? ''
+                    });
+                    io.to(updatedState.currentDrawerId!).emit('your-word', updatedState.currentWord)
+                });
+                console.log('emitting correct-guess with word:', updatedState.currentWord)
+                io.to(roomId).emit('correct-guess', { username, word });
+            }
+        }
     });
 
     socket.on('get-chat-history', () => {
@@ -94,6 +115,23 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
         socket.emit('chat-message', history);
     });
 
+    // Listen for 'start-game' events from the client
+    socket.on('start-game', () => {
+        const oldState = getGameState(socket.data.roomId);
+        if (oldState?.isPlaying) return; // Prevent restarting an ongoing game
+
+        const gameState: GameState = startGame(socket.data.roomId, getRoom(socket.data.roomId)?.users ?? []);
+        if (!gameState) return;
+
+        io.to(socket.data.roomId).emit('game-started', {
+            currentDrawerId: gameState.currentDrawerId,
+            drawerIndex: gameState.drawerIndex
+        })
+        if (gameState.currentDrawerId) {
+            io.to(gameState.currentDrawerId).emit('your-word', gameState.currentWord)
+        }
+    })
+
     // Cleanup on disconnect
     socket.on('disconnect', () => {
         const { roomId } = socket.data;
@@ -101,8 +139,18 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
 
         leaveRoom(roomId, socket.id);
 
+        const newState = handlePlayerLeave(roomId, socket.id, getRoom(roomId)?.users ?? []);
         const room = getRoom(roomId);
         io.to(roomId).emit('room-users', room?.users ?? []);
+
+        if (!newState?.isPlaying) return;
+
+        io.to(roomId).emit('next-turn', {
+            drawerId: newState?.currentDrawerId!,
+            drawerUsername: getRoom(roomId)?.users.find(u => u.id === newState?.currentDrawerId)?.username ?? ''
+        });
+
+        io.to(newState.currentDrawerId!).emit('your-word', newState.currentWord);
     })
 });
 

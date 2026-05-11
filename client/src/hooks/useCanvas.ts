@@ -4,25 +4,39 @@ import type { StrokeSegment } from '../types';
 import useDrawSync from './useDrawSync';
 import { drawSegment } from '../utils/canvasUtils';
 
-export default function useCanvas(color: string, brushSize: number, eraser: boolean, username: string): { canvasRef: React.RefObject<HTMLCanvasElement>, saveAsPng: () => void, undo: () => void } {
+export default function useCanvas(
+    color: string,
+    brushSize: number,
+    eraser: boolean,
+    username: string
+): {
+    canvasRef: React.RefObject<HTMLCanvasElement>,
+    saveAsPng: () => void,
+    undo: () => void,
+    clearStrokes: () => void
+} {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const isMouseDown = useRef(false);
     const mousePosition = useRef<{ x: number; y: number } | null>(null);
-    const { socket } = useStore();
+    const { socket, currentDrawerId, isPlaying } = useStore();
     const usernameRef = useRef(username);
+    const isPlayingRef = useRef(isPlaying);
+    const drawerRef = useRef(currentDrawerId);
     const colorRef = useRef(color);
     const brushSizeRef = useRef(brushSize);
     const eraserRef = useRef(eraser);
     const allStrokes = useRef<StrokeSegment[]>([]);
     const currentStrokeId = useRef<string | null>(null);
-    const { emitDraw, emitUndo } = useDrawSync(allStrokes, canvasRef);
+    const { emitDraw, emitUndo, clearStrokes } = useDrawSync(allStrokes, canvasRef);
 
     useEffect(() => {
         colorRef.current = color;
         brushSizeRef.current = brushSize;
         eraserRef.current = eraser;
         usernameRef.current = username;
-    }, [color, brushSize, eraser, username]);
+        drawerRef.current = currentDrawerId;
+        isPlayingRef.current = isPlaying;
+    }, [color, brushSize, eraser, username, currentDrawerId, isPlaying]);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -41,6 +55,7 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
 
         function handleDraw(newMousePosition: { x: number; y: number }) {
             if (!mousePosition.current || !isMouseDown.current || !ctx) return;
+            if (drawerRef.current !== socket?.id && isPlayingRef.current) return;
 
             const segment: StrokeSegment = {
                 x0: mousePosition.current.x,
@@ -149,5 +164,5 @@ export default function useCanvas(color: string, brushSize: number, eraser: bool
         emitUndo(strokeId)
     }
 
-    return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo };
+    return { canvasRef: canvasRef as React.RefObject<HTMLCanvasElement>, saveAsPng, undo, clearStrokes };
 }
