@@ -47,6 +47,16 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
             });
         }
 
+        const gameState = getGameState(roomId);
+        if (gameState?.isPlaying) {
+            socket.emit('game-state', {
+                currentDrawer: gameState.currentDrawerId as string,
+                wordLength: gameState.currentWord?.length ?? 0,
+                timeLeft: gameState.timeLeft,
+                isPlaying: gameState.isPlaying,
+            });
+        }
+
         // Send chat history to the new joiner
         const history = getRoom(roomId).chatHistory;
         if (history.length > 0) {

@@ -7,6 +7,7 @@ export interface GameState {
     currentWord: string | null;
     drawerIndex: number;
     correctGuessTimeout: ReturnType<typeof setTimeout> | null;
+    timeLeft?: number | undefined;
 }
 
 const gameStates: Record<string, GameState> = {};

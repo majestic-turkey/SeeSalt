@@ -41,12 +41,19 @@ function App(): JSX.Element {
     }
     socket.on('correct-guess', handleCorrectGuess);
 
+    const handleGameState = (payload: { currentDrawer: string; wordLength: number; timeLeft: number | undefined; isPlaying: boolean }) => {
+      setIsPlaying(payload.isPlaying)
+      setCurrentDrawerId(payload.currentDrawer)
+    }
+    socket.on('game-state', handleGameState);
+
     return () => {
       socket.off('game-started', handleGameStarted)
       socket.off('your-word', handleYourWord)
       socket.off('next-turn', handleNextTurn)
       socket.off('correct-guess', handleCorrectGuess)
       socket.off('room-users', handleRoomUsers)
+      socket.off('game-state', handleGameState)
       socket.disconnect();
     };
   }, [setSocket, setUsers, setIsPlaying, setCurrentDrawerId, setCurrentWord]);
