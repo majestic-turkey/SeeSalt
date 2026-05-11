@@ -31,7 +31,7 @@ export interface ServerToClientEvents {
     'your-word': (word: string) => void
     'correct-guess': (payload: { username: string, word: string }) => void
     'next-turn': (payload: { drawerId: string; drawerUsername: string }) => void
-    'game-state': (payload: { currentDrawer: string; wordLength: number; timeLeft: number }) => void
+    'game-state': (payload: { currentDrawer: string; wordLength: number; timeLeft: number | undefined; isPlaying: boolean }) => void
 }
 
 export interface StrokeSegment {
