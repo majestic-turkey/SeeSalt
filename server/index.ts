@@ -80,7 +80,8 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
     });
 
     // Listen for 'send-chat-message' events from the client
-    socket.on('send-chat-message', (message) => {const { roomId, username } = socket.data;
+    socket.on('send-chat-message', (message) => {
+        const { roomId, username } = socket.data;
         if (!roomId || !username) return;
         const chatMessage = { socketId: socket.id, username, message, timestamp: Date.now() };
         addChatMessageToRoom(roomId, chatMessage);
@@ -95,16 +96,14 @@ io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>)
             const word = newState.currentWord?.toLowerCase();
             if (guess === word) {
                 const updatedState = handleCorrectGuess(roomId, getRoom(roomId)?.users ?? [], () => {
-                    console.log('timeout fired')
-                    console.log('new drawer:', updatedState.currentDrawerId)
-                    console.log('new word:', updatedState.currentWord)
                     io.to(roomId).emit('next-turn', {
                         drawerId: updatedState.currentDrawerId!,
                         drawerUsername: getRoom(roomId)?.users.find(u => u.id === updatedState.currentDrawerId)?.username ?? ''
                     });
                     io.to(updatedState.currentDrawerId!).emit('your-word', updatedState.currentWord)
                 });
-                io.to(roomId).emit('correct-guess', { username, word: updatedState.currentWord! });
+                console.log('emitting correct-guess with word:', updatedState.currentWord)
+                io.to(roomId).emit('correct-guess', { username, word });
             }
         }
     });

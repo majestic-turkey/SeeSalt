@@ -15,6 +15,7 @@ export default function Room() {
     const [eraser, setEraser] = useState(false);
     const [cursors, setCursors] = useState<Record<string, { x: number; y: number; username: string }>>({});
     const [correctGuesser, setCorrectGuesser] = useState<string | null>(null);
+    const [guessedWord, setGuessedWord] = useState<string | null>(null);
 
     // Global state and utilities
 
@@ -49,11 +50,14 @@ export default function Room() {
             canvasRef.current?.getContext('2d')?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             clearStrokes();
             setCorrectGuesser(null);
+            setGuessedWord(null);
         }
 
-        const handleCorrectGuess = (payload: { username: string }) => {
+        const handleCorrectGuess = (payload: { username: string, word: string }) => {
+            console.log('correct-guess received:', payload)
             startTimer(15);
             setCorrectGuesser(payload.username);
+            setGuessedWord(payload.word);
         }
 
         // Handle cursor updates from other users
@@ -70,7 +74,7 @@ export default function Room() {
             socket.off('correct-guess', handleCorrectGuess);
             socket.off('next-turn', handleNextTurn);
         };
-    }, [socket, canvasRef, startTimer, clearStrokes]);
+    }, [socket, canvasRef, startTimer, clearStrokes, currentWord]);
 
     // Listen for users to leave the room and remove their cursors
     useEffect(() => {
@@ -161,7 +165,7 @@ export default function Room() {
                 {isPlaying && (
                     <div className="status-bar">
                         {timeLeft !== null
-                            ? <p>{correctGuesser} guessed it! Next turn in {timeLeft}s — the word was "{currentWord}"</p>
+                            ? <p>{correctGuesser} guessed it! Next turn in {timeLeft}s — the word was "{guessedWord}"</p>
                             : isDrawer
                                 ? <p>Draw: <strong>{currentWord}</strong></p>
                                 : <p>{users.find(u => u.id === currentDrawerId)?.username} is drawing — guess in chat!</p>
