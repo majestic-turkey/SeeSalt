@@ -5,6 +5,6 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     labels:
-    homepage.enable: "true"
-    homepage.url: "https://canvas.thesaltworks.io"
-    homepage.title: "SeeSalt"
+      homepage.enable: "true"
+      homepage.url: "https://canvas.thesaltworks.io"
+      homepage.title: "SeeSalt"
